@@ -8,10 +8,13 @@ Atmel AVR8 microcontroller.
 === Requirements ===
 
 Software:
-Arduino IDE: http://arduino.cc/
-avrdude: http://savannah.nongnu.org/projects/avrdude/
+Arduino IDE (to program the Chronulator firmware)
+avrdude (to program the AVR8 bootloader)
+avr-gcc (to compile and link the bootloader)
+EAGLE 5.x (to edit the schematic or circuit board)
 
 Hardware:
+A Chronulator or Chronulator-compatible device.
 A serial adaptor and/or an Atmel ISP programmer.
 
 === Contact ===

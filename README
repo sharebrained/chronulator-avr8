@@ -1,0 +1,26 @@
+Project chronulator-avr8
+http://www.sharebrained.com/chronulator/
+
+=== Description ===
+An analog panel meter clock implementation based on the
+Atmel AVR8 microcontroller.
+
+=== Requirements ===
+
+Software:
+Arduino IDE: http://arduino.cc/
+avrdude: http://savannah.nongnu.org/projects/avrdude/
+
+Hardware:
+A serial adaptor and/or an Atmel ISP programmer.
+
+=== Contact ===
+ShareBrained Technology, Inc.
+http://www.sharebrained.com/
+info@sharebrained.com
+
+Business Address:
+ShareBrained Technology, Inc.
+1526 NE Alberta St #129
+Portland, OR 97211
+United States

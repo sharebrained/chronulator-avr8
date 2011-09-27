@@ -45,16 +45,16 @@ static const unsigned char debounce_wait = 4;
 static unsigned char debounce_counter_s1 = 0;
 static unsigned char debounce_counter_s2 = 0;
 
-static boolean s1_active = false;
-static boolean s2_active = false;
+static boolean hours_button_active = false;
+static boolean minutes_button_active = false;
 
 #define METER_M OCR2A
 #define METER_H OCR2B
 
-void s1_pressed() {
+void hours_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
-    if( s2_active ) {
+    if( minutes_button_active ) {
       subtract_minute();
       set_mode_calibrate_zero_scale();
     } else {
@@ -64,13 +64,13 @@ void s1_pressed() {
     break;
     
   case METER_MODE_CALIBRATE_ZERO_SCALE:
-    if( s2_active ) {
+    if( minutes_button_active ) {
       set_mode_calibrate_full_scale();
     }
     break;
     
   case METER_MODE_CALIBRATE_FULL_SCALE:
-    if( s2_active ) {
+    if( minutes_button_active ) {
       set_mode_show_time();
     }
     break;
@@ -80,13 +80,13 @@ void s1_pressed() {
   }
 }
 
-void s1_released() {
+void hours_button_released() {
 }
 
-void s2_pressed() {
+void minutes_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
-    if( s1_active ) {
+    if( hours_button_active ) {
       subtract_hour();
       set_mode_calibrate_zero_scale();
     } else {
@@ -96,13 +96,13 @@ void s2_pressed() {
     break;
     
   case METER_MODE_CALIBRATE_ZERO_SCALE:
-    if( s1_active ) {
+    if( hours_button_active ) {
       set_mode_calibrate_full_scale();
     }
     break;
     
   case METER_MODE_CALIBRATE_FULL_SCALE:
-    if( s1_active ) {
+    if( hours_button_active ) {
       set_mode_show_time();
     }
     break;
@@ -112,7 +112,7 @@ void s2_pressed() {
   }
 }
 
-void s2_released() {
+void minutes_button_released() {
 }
 
 #define BATTERY_PRESENT_PORT (PINC)
@@ -121,41 +121,41 @@ void s2_released() {
 
 // TODO: Rename S1, S2 to S2, S3 --> HOURS, MINUTES
 
-#define S1_PORT PINB
-#define S1_BIT _BV(PINB0)
+#define HOURS_BUTTON_PORT PINB
+#define HOURS_BUTTON_BIT _BV(PINB0)
 
-#define S2_PORT PIND
-#define S2_BIT _BV(PIND7)
+#define MINUTES_BUTTON_PORT PIND
+#define MINUTES_BUTTON_BIT _BV(PIND7)
 
 void debounce_buttons() {
-  if( s1_active ) {
-    if( S1_PORT & S1_BIT ) {
-      s1_active = false;
-      s1_released();
+  if( hours_button_active ) {
+    if( HOURS_BUTTON_PORT & HOURS_BUTTON_BIT ) {
+      hours_button_active = false;
+      hours_button_released();
     }
   } else {
-    if( (S1_PORT & S1_BIT) == 0 ) {
+    if( (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) == 0 ) {
       debounce_counter_s1++;
       if( debounce_counter_s1 == debounce_wait ) {
-        s1_active = true;
-        s1_pressed();
+        hours_button_active = true;
+        hours_button_pressed();
       }
     } else {
       debounce_counter_s1 = 0;
     }
   }
   
-  if( s2_active ) {
-    if( S2_PORT & S2_BIT ) {
-      s2_active = false;
-      s2_released();
+  if( minutes_button_active ) {
+    if( MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT ) {
+      minutes_button_active = false;
+      minutes_button_released();
     }
   } else {
-    if( (S2_PORT & S2_BIT) == 0 ) {
+    if( (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) == 0 ) {
       debounce_counter_s2++;
       if( debounce_counter_s2 == debounce_wait ) {
-        s2_active = true;
-        s2_pressed();
+        minutes_button_active = true;
+        minutes_button_pressed();
       }
     } else {
       debounce_counter_s2 = 0;

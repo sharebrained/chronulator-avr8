@@ -115,9 +115,9 @@ void minutes_button_pressed() {
 void minutes_button_released() {
 }
 
-#define BATTERY_PRESENT_PORT (PINC)
-#define BATTERY_PRESENT_BIT (_BV(PINC1))
-#define BATTERY_PRESENT (BATTERY_PRESENT_PORT & BATTERY_PRESENT_BIT)
+#define DC_PLUG_PRESENT_PORT (PINC)
+#define DC_PLUG_PRESENT_BIT (_BV(PINC1))
+#define DC_PLUG_PRESENT (DC_PLUG_PRESENT_PORT & DC_PLUG_PRESENT_BIT)
 
 #define HOURS_BUTTON_PORT PINB
 #define HOURS_BUTTON_BIT _BV(PINB0)
@@ -400,38 +400,38 @@ void disable_usart0() {
   power_usart0_disable();
 }
 
-boolean is_battery_powered() {
-  return BATTERY_PRESENT != 0;
+boolean is_dc_plug_present() {
+  return DC_PLUG_PRESENT != 0;
 }
 
 enum PowerMode {
-  BATTERY,
-  USB
+  POWER_MODE_DC_JACK,
+  POWER_MODE_SERIAL_PORT
 };
 
-static PowerMode power_mode = BATTERY;
+static PowerMode power_mode = POWER_MODE_DC_JACK;
 
 void power_up() {
   clock_prescale_set(clock_div_1);
   enable_led_backlights();
   enable_usart0();
-  power_mode = USB;
+  power_mode = POWER_MODE_SERIAL_PORT;
 }
 
 void power_down() {
-  power_mode = BATTERY;
+  power_mode = POWER_MODE_DC_JACK;
   clock_prescale_set(clock_div_2);
   disable_usart0();
   disable_led_backlights();
 }
 
 void update_power_mode() {
-  if( is_battery_powered() ) {
-    if( power_mode != BATTERY ) {
+  if( is_dc_plug_present() ) {
+    if( power_mode != POWER_MODE_DC_JACK ) {
       power_down();
     }
   } else {
-    if( power_mode != USB ) {
+    if( power_mode != POWER_MODE_SERIAL_PORT ) {
       power_up();
     }
   }
@@ -476,7 +476,7 @@ void initializePorts() {
   PORTB = _BV(PB0);
 
   // PC0: I:
-  // PC1: I, pullup: Battery plug present (DDC1=0, PC1=1)
+  // PC1: I, pullup: DC plug present (DDC1=0, PC1=1)
   // PC2: I:
   // PC3: I:
   // PC4: I:

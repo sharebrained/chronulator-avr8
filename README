@@ -43,6 +43,12 @@ Hardware:
 A Chronulator or Chronulator-compatible device.
 A serial adaptor and/or an Atmel ISP programmer.
 
+=== Usage ===
+
+Before compiling and uploading this code in the Arduino
+IDE, please select "LilyPad Arduino w/ ATmega168" under
+the "Tools->Board" menu.
+
 === Contact ===
 
 ShareBrained Technology, Inc.

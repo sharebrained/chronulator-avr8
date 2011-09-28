@@ -203,12 +203,35 @@ void set_mode_serial_control() {
   }
 }
 
+#define HOUR_PULSE_PIN_PORT (PORTD)
+#define HOUR_PULSE_PIN_BIT (_BV(PD4))
+
+#define MINUTE_PULSE_PIN_PORT (PORTD)
+#define MINUTE_PULSE_PIN_BIT (_BV(PD2))
+
+void set_start_of_hour(const bool value) {
+  if( value ) {
+    HOUR_PULSE_PIN_PORT |= HOUR_PULSE_PIN_BIT;
+  } else {
+    HOUR_PULSE_PIN_PORT &= ~HOUR_PULSE_PIN_BIT;
+  }
+}
+
+void set_start_of_minute(const bool value) {
+  if( value ) {
+    MINUTE_PULSE_PIN_PORT |= MINUTE_PULSE_PIN_BIT;
+  } else {
+    MINUTE_PULSE_PIN_PORT &= ~MINUTE_PULSE_PIN_BIT;
+  }
+}
+
 void tick_hour() {
   if( hour < (maximumHours - 1) ) {
     hour++;
   } else {
     hour = 0;
   }
+  set_start_of_hour(true);
 }
 
 void tick_minute() {
@@ -218,11 +241,14 @@ void tick_minute() {
     minute = 0;
     tick_hour();
   }
+  set_start_of_minute(true);
 }
 
 void tick_second() {
   if( second < (secondsPerMinute - 1) ) {
     second++;
+    set_start_of_minute(false);
+    set_start_of_hour(false);
   } else {
     second = 0;
     tick_minute();
@@ -481,13 +507,13 @@ void initializePorts() {
 
   // PD0: I: RXD Serial RX (DDD0=0, PD0=1)
   // PD1: O: TXD Serial TX (DDD1=1, PD1=1)
-  // PD2: I:
+  // PD2: I: Start-of-minute pulse (DDD2=1, PD2=0)
   // PD3: O: OC2B PWM output, "hours" meter (DDD3=1, PD3=0)
-  // PD4: I:
+  // PD4: I: Start-of-hour pulse (DDD4=1, PD4=0)
   // PD5: O: OC0B PWM output, LED (DDD5=1, PD5=0)
   // PD6: O: OC0A PWM output, LED (DDD6=1, PD6=0)
   // PD7: I, pullup: Switch (DDD7=0, PD7=1)
-  DDRD = 0;
+  DDRD = _BV(DDD2) | _BV(DDD4);
   PORTD = _BV(PD7);
 
   // Do not disable internal pull-up resistors on ports.

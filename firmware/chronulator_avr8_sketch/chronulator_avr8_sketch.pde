@@ -438,8 +438,6 @@ ISR(TIMER2_OVF_vect) {
 
   tick_tick();
 
-  update_power_mode();
-  
   debounce_buttons();
   
   // Ensure TOSC cycle will not cause extra interrupts.
@@ -821,6 +819,8 @@ void setup() {
   power_all_disable();
   
   initializeTimer2For32KHzCrystal();
+
+  update_power_mode();
   
   sei();
 }

@@ -51,6 +51,9 @@ static bool minutes_button_active = false;
 #define METER_M OCR2A
 #define METER_H OCR2B
 
+#define SERVO_M OCR1A
+#define SERVO_H OCR1B
+
 void hours_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
@@ -173,9 +176,20 @@ static const unsigned char meter_scale_hours = 20;
 static unsigned char meter_m_value = 0;
 static unsigned char meter_h_value = 0;
 
+static const unsigned short servo_scale_minutes = 31;
+static const unsigned short servo_scale_hours = 155;
+static const unsigned short servo_offset_minutes = 544;
+static const unsigned short servo_offset_hours = 544;
+
+static unsigned short servo_m_value = servo_offset_minutes;
+static unsigned short servo_h_value = servo_offset_hours;
+
 void show_time() {
   meter_m_value = minute * meter_scale_minutes;
   meter_h_value = hour * meter_scale_hours;
+  
+  servo_m_value = minute * servo_scale_minutes + servo_offset_minutes;
+  servo_h_value = hour * servo_scale_hours + servo_offset_hours;
 }
 
 void set_mode_show_time() {
@@ -317,6 +331,7 @@ void waitForTimer2CycleToEnd() {
 }
 
 static bool timer0_enabled = false;
+static bool servos_enabled = false;
 static bool usart0_enabled = false;
 
 void update_sleep_mode() {
@@ -422,6 +437,19 @@ void disable_usart0() {
   power_usart0_disable();
 }
 
+void enable_servos() {
+  power_timer1_enable();
+  
+  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
+  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
+  ICR1 = 20000;
+  TCNT1 = 0;
+  OCR1A = 0;
+  OCR1B = 0;
+  
+  servos_enabled = true;
+}
+
 typedef enum _PowerMode {
   POWER_MODE_LOW_POWER,
   POWER_MODE_HIGH_POWER
@@ -433,6 +461,7 @@ void switch_to_high_power_mode() {
   clock_prescale_set(clock_div_1);
   enable_led_backlights();
   enable_usart0();
+  enable_servos();
   power_mode = POWER_MODE_HIGH_POWER;
 }
 
@@ -462,6 +491,9 @@ ISR(TIMER2_OVF_vect) {
   METER_M = meter_m_value;
   METER_H = meter_h_value;
 
+  SERVO_M = servo_m_value;
+  SERVO_H = servo_h_value;
+  
   tick_tick();
 
   debounce_buttons();
@@ -484,8 +516,8 @@ void initializePorts() {
   // Configure I/O pins for lowest power.
   
   // PB0: I, pullup: Switch (DDB0=0, PB0=1)
-  // PB1: I: OC1A PWM output (DDB1=1, PB1=0)
-  // PB2: I: OC1B PWM output (DDB2=1, PB2=0)
+  // PB1: O: OC1A PWM output (DDB1=1, PB1=0)
+  // PB2: O: OC1B PWM output (DDB2=1, PB2=0)
   // PB3: O: OC2A PWM output, "minutes" meter (DDB3=1, PB3=0)
   // PB4: I:
   // PB5: I:

@@ -45,8 +45,8 @@ static const unsigned char debounce_wait = 4;
 static unsigned char debounce_counter_s1 = 0;
 static unsigned char debounce_counter_s2 = 0;
 
-static boolean hours_button_active = false;
-static boolean minutes_button_active = false;
+static bool hours_button_active = false;
+static bool minutes_button_active = false;
 
 #define METER_M OCR2A
 #define METER_H OCR2B
@@ -274,7 +274,7 @@ void tick_tick() {
   }
 }
 
-boolean sleepModeCausesSpuriousTimer2Interrupts() {
+bool sleepModeCausesSpuriousTimer2Interrupts() {
   switch( SMCR & (_BV(SM2) | _BV(SM1) | _BV(SM0)) ) {
   case (_BV(SM1) | _BV(SM0)):
   case (_BV(SM0)):
@@ -290,8 +290,8 @@ void waitForTimer2CycleToEnd() {
   while(ASSR & (_BV(OCR2AUB) | _BV(OCR2BUB)));
 }
 
-static boolean timer0_enabled = false;
-static boolean usart0_enabled = false;
+static bool timer0_enabled = false;
+static bool usart0_enabled = false;
 
 void update_sleep_mode() {
   if( timer0_enabled || usart0_enabled ) {
@@ -537,7 +537,7 @@ void initializeTimer2For32KHzCrystal() {
   DDRD |= _BV(DDD3);
 }
 
-boolean is_digit(const char c) {
+bool is_digit(const char c) {
   return (c >= '0') && (c <= '9');
 }
 
@@ -565,7 +565,7 @@ public:
     }
   }
   
-  boolean is_room_in_buffer() {
+  bool is_room_in_buffer() {
     static const unsigned char buffer_size = sizeof(buffer) / sizeof(*buffer);
     return buffer_position < buffer_size;
   }
@@ -580,7 +580,7 @@ public:
     }
   }
   
-  boolean startsWithIgnoreCase(const char * compare) const {
+  bool startsWithIgnoreCase(const char * compare) const {
     int compare_len = strlen(compare);
     if( buffer_position < compare_len ) {
       return false;
@@ -624,17 +624,17 @@ extern "C" {
 
 class Command {
 public:
-  virtual boolean match(const CommandBuffer & buffer) = 0;
-  virtual boolean execute(const CommandBuffer & buffer) = 0;
+  virtual bool match(const CommandBuffer & buffer) = 0;
+  virtual bool execute(const CommandBuffer & buffer) = 0;
 };
 
 class CommandHV : public Command {
 public:
-  boolean match(const CommandBuffer & buffer) {
+  bool match(const CommandBuffer & buffer) {
     return buffer.startsWithIgnoreCase("hv=");
   }
   
-  boolean execute(const CommandBuffer & buffer) {
+  bool execute(const CommandBuffer & buffer) {
     int value = buffer.readUnsignedIntegerAt(3);
     if( value >= 0 ) {
       if( value < 256 ) {
@@ -650,11 +650,11 @@ public:
 
 class CommandHL : public Command {
 public:
-  boolean match(const CommandBuffer & buffer) {
+  bool match(const CommandBuffer & buffer) {
     return buffer.startsWithIgnoreCase("hl=");
   }
   
-  boolean execute(const CommandBuffer & buffer) {
+  bool execute(const CommandBuffer & buffer) {
     int value = buffer.readUnsignedIntegerAt(3);
     if( value >= 0 ) {
       if( value < 256 ) {
@@ -669,11 +669,11 @@ public:
 
 class CommandMV : public Command {
 public:
-  boolean match(const CommandBuffer & buffer) {
+  bool match(const CommandBuffer & buffer) {
     return buffer.startsWithIgnoreCase("mv=");
   }
   
-  boolean execute(const CommandBuffer & buffer) {
+  bool execute(const CommandBuffer & buffer) {
     int value = buffer.readUnsignedIntegerAt(3);
     if( value >= 0 ) {
       if( value < 256 ) {
@@ -690,11 +690,11 @@ public:
 
 class CommandML : public Command {
 public:
-  boolean match(const CommandBuffer & buffer) {
+  bool match(const CommandBuffer & buffer) {
     return buffer.startsWithIgnoreCase("ml=");
   }
   
-  boolean execute(const CommandBuffer & buffer) {
+  bool execute(const CommandBuffer & buffer) {
     int value = buffer.readUnsignedIntegerAt(3);
     if( value >= 0 ) {
       if( value < 256 ) {
@@ -709,11 +709,11 @@ public:
 
 class CommandT : public Command {
 public:
-  boolean match(const CommandBuffer & buffer) {
+  bool match(const CommandBuffer & buffer) {
     return buffer.startsWithIgnoreCase("t");
   }
   
-  boolean execute(const CommandBuffer & buffer) {
+  bool execute(const CommandBuffer & buffer) {
     set_mode_show_time();
   }
 };
@@ -765,7 +765,7 @@ private:
     static const int command_count = sizeof(commands) / sizeof(*commands);
     
     int i;
-    boolean success = false;
+    bool success = false;
     for( i=0; i<command_count; i++ ) {
       if( commands[i]->match(buffer) ) {
         success = commands[i]->execute(buffer);
@@ -793,7 +793,7 @@ private:
   }
 
   CommandBuffer buffer;
-  boolean error;
+  bool error;
 };
 
 CommandParser command_parser;

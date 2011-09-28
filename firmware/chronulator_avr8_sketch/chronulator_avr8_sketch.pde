@@ -119,8 +119,6 @@ void minutes_button_released() {
 #define BATTERY_PRESENT_BIT (_BV(PINC1))
 #define BATTERY_PRESENT (BATTERY_PRESENT_PORT & BATTERY_PRESENT_BIT)
 
-// TODO: Rename S1, S2 to S2, S3 --> HOURS, MINUTES
-
 #define HOURS_BUTTON_PORT PINB
 #define HOURS_BUTTON_BIT _BV(PINB0)
 

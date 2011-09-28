@@ -115,10 +115,6 @@ void minutes_button_pressed() {
 void minutes_button_released() {
 }
 
-#define DC_PLUG_PRESENT_PORT (PINC)
-#define DC_PLUG_PRESENT_BIT (_BV(PINC1))
-#define DC_PLUG_PRESENT (DC_PLUG_PRESENT_PORT & DC_PLUG_PRESENT_BIT)
-
 #define HOURS_BUTTON_PORT PINB
 #define HOURS_BUTTON_BIT _BV(PINB0)
 
@@ -400,39 +396,38 @@ void disable_usart0() {
   power_usart0_disable();
 }
 
-boolean is_dc_plug_present() {
-  return DC_PLUG_PRESENT != 0;
-}
+typedef enum _PowerMode {
+  POWER_MODE_LOW_POWER,
+  POWER_MODE_HIGH_POWER
+} PowerMode;
 
-enum PowerMode {
-  POWER_MODE_DC_JACK,
-  POWER_MODE_SERIAL_PORT
-};
+static PowerMode power_mode = POWER_MODE_LOW_POWER;
 
-static PowerMode power_mode = POWER_MODE_DC_JACK;
-
-void power_up() {
+void switch_to_high_power_mode() {
   clock_prescale_set(clock_div_1);
   enable_led_backlights();
   enable_usart0();
-  power_mode = POWER_MODE_SERIAL_PORT;
+  power_mode = POWER_MODE_HIGH_POWER;
 }
 
-void power_down() {
-  power_mode = POWER_MODE_DC_JACK;
+void switch_to_low_power_mode() {
+  power_mode = POWER_MODE_LOW_POWER;
   clock_prescale_set(clock_div_2);
   disable_usart0();
   disable_led_backlights();
 }
 
+#define POWER_MODE_PIN_PORT (PINC)
+#define POWER_MODE_PIN_BIT (_BV(PINC1))
+
 void update_power_mode() {
-  if( is_dc_plug_present() ) {
-    if( power_mode != POWER_MODE_DC_JACK ) {
-      power_down();
+  if( (POWER_MODE_PIN_PORT & POWER_MODE_PIN_BIT) == 0 ) {
+    if( power_mode != POWER_MODE_HIGH_POWER ) {
+      switch_to_high_power_mode();
     }
   } else {
-    if( power_mode != POWER_MODE_SERIAL_PORT ) {
-      power_up();
+    if( power_mode != POWER_MODE_LOW_POWER ) {
+      switch_to_low_power_mode();
     }
   }
 }
@@ -475,7 +470,7 @@ void initializePorts() {
   DDRB = _BV(DDB2) | _BV(DDB1);
   PORTB = _BV(PB0);
 
-  // PC0: I:
+  // PC0: I, pullup: High-power mode detect (DDC0=0, PC0=1)
   // PC1: I, pullup: DC plug present (DDC1=0, PC1=1)
   // PC2: I:
   // PC3: I:
@@ -484,7 +479,7 @@ void initializePorts() {
   // PC6: I: RESET
   // PC7: I: (no pin)
   DDRC = 0;
-  PORTC = _BV(PC1);
+  PORTC = _BV(PC1) | _BV(PC0);
 
   // PD0: I: RXD Serial RX (DDD0=0, PD0=1)
   // PD1: O: TXD Serial TX (DDD1=1, PD1=1)

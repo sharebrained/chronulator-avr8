@@ -334,14 +334,6 @@ static bool timer0_enabled = false;
 static bool servos_enabled = false;
 static bool usart0_enabled = false;
 
-void update_sleep_mode() {
-  if( timer0_enabled || usart0_enabled ) {
-    set_sleep_mode(SLEEP_MODE_IDLE);
-  } else {
-    set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-  }
-}
-
 void enable_timer0() {
   power_timer0_enable();
   
@@ -357,13 +349,10 @@ void enable_timer0() {
   TIFR0 = 0;
 
   timer0_enabled = true;
-  update_sleep_mode();  
 }
 
 void disable_timer0() {
   timer0_enabled = false;
-  update_sleep_mode();
-  
   power_timer0_disable();
 }
 
@@ -424,12 +413,10 @@ void enable_usart0() {
   Serial.println("READY");
   
   usart0_enabled = true;
-  update_sleep_mode();
 }
 
 void disable_usart0() {
   usart0_enabled = false;
-  update_sleep_mode();
 
   DDRD &= ~(_BV(DDD1) | _BV(DDD0));
   PORTD &= ~(_BV(PD1) | _BV(PD0));
@@ -458,6 +445,7 @@ typedef enum _PowerMode {
 static PowerMode power_mode = POWER_MODE_LOW_POWER;
 
 void switch_to_high_power_mode() {
+  set_sleep_mode(SLEEP_MODE_IDLE);
   clock_prescale_set(clock_div_1);
   enable_led_backlights();
   enable_usart0();
@@ -470,6 +458,7 @@ void switch_to_low_power_mode() {
   clock_prescale_set(clock_div_2);
   disable_usart0();
   disable_led_backlights();
+  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 }
 
 #define POWER_MODE_PIN_PORT (PINC)

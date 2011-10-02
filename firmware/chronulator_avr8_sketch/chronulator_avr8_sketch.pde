@@ -50,6 +50,8 @@ static bool minutes_button_active = false;
 
 #define METER_M OCR2A
 #define METER_H OCR2B
+#define METER_S OCR0A
+#define METER_MS OCR0B
 
 #define SERVO_M OCR1A
 #define SERVO_H OCR1B
@@ -172,6 +174,8 @@ static unsigned char tick = 0;
 
 static unsigned char meter_m_value = 0;
 static unsigned char meter_h_value = 0;
+static unsigned char meter_s_value = 0;
+static unsigned char meter_ms_value = 0;
 
 static const unsigned short servo_scale_minutes = 31;
 static const unsigned short servo_scale_hours = 155;
@@ -191,9 +195,21 @@ unsigned short set_meter_h(unsigned char hour) {
 	meter_h_value = (hour * 21) + (hour / 4);
 }
 
+unsigned short set_meter_s(unsigned char second) {
+	// 0-60 mapped to 0-255
+	meter_s_value = (second * 4) + (second / 4);
+}
+
+unsigned short set_meter_ms(unsigned char tick) {
+    // 0-127 mapped to 0-254
+	meter_ms_value = tick * 2;
+}
+
 void show_time() {
   set_meter_m(minute);
   set_meter_h(hour);
+  set_meter_s(second);
+  set_meter_ms(tick);
   
   servo_m_value = minute * servo_scale_minutes + servo_offset_minutes;
   servo_h_value = hour * servo_scale_hours + servo_offset_hours;
@@ -208,12 +224,16 @@ void set_mode_calibrate_zero_scale() {
   meter_mode = METER_MODE_CALIBRATE_ZERO_SCALE;
   set_meter_m(0);
   set_meter_h(0);
+  set_meter_s(0);
+  set_meter_ms(0);
 }
 
 void set_mode_calibrate_full_scale() {
   meter_mode = METER_MODE_CALIBRATE_FULL_SCALE;
   set_meter_m(minutesPerHour);
   set_meter_h(maximumHours);
+  set_meter_s(secondsPerMinute);
+  set_meter_ms(ticksPerSecond - 1);
 }
 
 void set_mode_serial_control() {
@@ -221,6 +241,8 @@ void set_mode_serial_control() {
     meter_mode = METER_MODE_SERIAL_CONTROL;
     set_meter_m(0);
     set_meter_h(0);
+    set_meter_s(0);
+    set_meter_ms(0);
   }
 }
 
@@ -363,45 +385,18 @@ void disable_timer0() {
   power_timer0_disable();
 }
 
-static unsigned char led_backlight_m_value = 0;
-static unsigned char led_backlight_h_value = 0;
-
-void enable_led_backlights() {
+void enable_s_and_ms_meters() {
   enable_timer0();
 
   // TODO: PORTD settings?
   DDRD |= _BV(DDD6) | _BV(DDD5);
 }
 
-void disable_led_backlights() {
+void disable_s_and_ms_meters() {
   DDRD &= ~(_BV(DDD6) | _BV(DDD5));
   // TODO: PORTD settings?
   
   disable_timer0();
-}
-
-void update_led_backlights() {
-  if( (led_backlight_m_value > 0) || (led_backlight_h_value > 0) ) {
-    if( !timer0_enabled ) {
-      enable_led_backlights();
-    }
-    OCR0A = led_backlight_m_value;
-    OCR0B = led_backlight_h_value;
-  } else {
-    if( timer0_enabled ) {
-      disable_led_backlights();
-    }
-  }
-}
-
-void set_led_h_brightness(const unsigned char brightness) {
-  led_backlight_h_value = brightness;
-  update_led_backlights();
-}
-
-void set_led_m_brightness(const unsigned char brightness) {
-  led_backlight_m_value = brightness;
-  update_led_backlights();
 }
 
 void enable_usart0() {
@@ -454,7 +449,7 @@ static PowerMode power_mode = POWER_MODE_LOW_POWER;
 void switch_to_high_power_mode() {
   set_sleep_mode(SLEEP_MODE_IDLE);
   clock_prescale_set(clock_div_1);
-  enable_led_backlights();
+  enable_s_and_ms_meters();
   enable_usart0();
   enable_servos();
   power_mode = POWER_MODE_HIGH_POWER;
@@ -464,7 +459,7 @@ void switch_to_low_power_mode() {
   power_mode = POWER_MODE_LOW_POWER;
   clock_prescale_set(clock_div_2);
   disable_usart0();
-  disable_led_backlights();
+  disable_s_and_ms_meters();
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 }
 
@@ -486,6 +481,8 @@ void update_power_mode() {
 ISR(TIMER2_OVF_vect) {
   METER_M = meter_m_value;
   METER_H = meter_h_value;
+  METER_S = meter_s_value;
+  METER_MS = meter_ms_value;
 
   SERVO_M = servo_m_value;
   SERVO_H = servo_h_value;

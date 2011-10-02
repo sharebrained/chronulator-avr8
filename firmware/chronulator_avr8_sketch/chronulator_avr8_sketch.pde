@@ -236,16 +236,6 @@ void set_mode_calibrate_full_scale() {
   set_meter_ms(ticksPerSecond - 1);
 }
 
-void set_mode_serial_control() {
-  if( meter_mode != METER_MODE_SERIAL_CONTROL ) {
-    meter_mode = METER_MODE_SERIAL_CONTROL;
-    set_meter_m(0);
-    set_meter_h(0);
-    set_meter_s(0);
-    set_meter_ms(0);
-  }
-}
-
 #define HOUR_PULSE_PIN_PORT (PORTD)
 #define HOUR_PULSE_PIN_BIT (_BV(PD4))
 

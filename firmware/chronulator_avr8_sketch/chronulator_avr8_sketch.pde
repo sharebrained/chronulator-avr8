@@ -40,6 +40,154 @@ typedef enum meter_mode {
 
 static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
 
+class Time {
+public:
+	typedef void (*ValueUpdateCallback)(unsigned char new_value);
+
+	Time(const ValueUpdateCallback callback_hour,
+		 const ValueUpdateCallback callback_minute,
+		 const ValueUpdateCallback callback_second,
+		 const ValueUpdateCallback callback_tick) :
+		hour_(maximumHours / 2),
+		minute_(minutesPerHour / 2),
+		second_(0),
+		tick_(0),
+		callback_hour_(callback_hour),
+		callback_minute_(callback_minute),
+		callback_second_(callback_second),
+		callback_tick_(callback_tick) {
+	}
+
+	void set_hour(unsigned char new_value) {
+	  hour_ = new_value;
+	  callback_hour_(hour_);
+	}
+
+	unsigned char get_hour() {
+	  return hour_;
+	}
+
+	void set_minute(unsigned char new_value) {
+	  minute_ = new_value;
+	  callback_minute_(minute_);
+	}
+
+	unsigned char get_minute() {
+	  return minute_;
+	}
+
+	void set_second(unsigned char new_value) {
+	  second_ = new_value;
+	  callback_second_(second_);
+	}
+
+	unsigned char get_second() {
+	  return second_;
+	}
+
+	void set_tick(unsigned char new_value) {
+	  tick_ = new_value;
+	  callback_tick_(tick_);
+	}
+
+	unsigned char get_tick() {
+	  return tick_;
+	}
+
+	void add_hour() {
+	  if( get_hour() < (maximumHours - 1) ) {
+	    set_hour(get_hour() + 1);
+	  } else {
+	    set_hour(0);
+	  }
+	}
+
+	void subtract_hour() {
+	  if( get_hour() > 0 ) {
+	    set_hour(get_hour() - 1);
+	  } else {
+	    set_hour(maximumHours - 1);
+	  }
+	}
+
+	void add_minute() {
+	  if( get_minute() < (minutesPerHour - 1) ) {
+	    set_minute(get_minute() + 1);
+	  } else {
+	    set_minute(0);
+	  }
+	}
+
+	void subtract_minute() {
+	  if( get_minute() > 0 ) {
+	    set_minute(get_minute() - 1);
+	  } else {
+	    set_minute(minutesPerHour - 1);
+	  }
+	}
+
+	void tick() {
+		advance_tick();
+	}
+
+	static const unsigned char ticksPerSecond = 128;
+	static const unsigned char secondsPerMinute = 60;
+	static const unsigned char minutesPerHour = 60;
+	static const unsigned char maximumHours = 12;
+
+private:
+	unsigned char hour_;
+	unsigned char minute_;
+	unsigned char second_;
+	unsigned char tick_;
+
+	const ValueUpdateCallback callback_hour_;
+	const ValueUpdateCallback callback_minute_;
+	const ValueUpdateCallback callback_second_;
+	const ValueUpdateCallback callback_tick_;
+
+	void advance_hour() {
+      add_hour();
+	}
+
+	void advance_minute() {
+      add_minute();
+      if( get_minute() == 0 ) {
+	    advance_hour();
+	  }
+	}
+
+	void advance_second() {
+	  add_second();
+	  if( get_second() == 0 ) {
+		advance_minute();
+	  }
+	}
+
+	void advance_tick() {
+	  add_tick();
+	  if( get_tick() == 0 ) {
+		advance_second();
+	  }
+	}
+
+	void add_second() {
+	  if( get_second() < (secondsPerMinute - 1) ) {
+		set_second(get_second() + 1);
+	  } else {
+		set_second(0);
+	  }
+	}
+
+	void add_tick() {
+	  if( get_tick() < (ticksPerSecond - 1) ) {
+		set_tick(get_tick() + 1);
+	  } else {
+		set_tick(0);
+	  }
+	}
+};
+
 static const unsigned char debounce_wait = 4;
 
 static unsigned char debounce_counter_hours = 0;
@@ -56,15 +204,161 @@ static bool minutes_button_active = false;
 #define SERVO_M OCR1A
 #define SERVO_H OCR1B
 
+#define HOUR_PULSE_PIN_PORT (PORTD)
+#define HOUR_PULSE_PIN_BIT (_BV(PD4))
+
+#define MINUTE_PULSE_PIN_PORT (PORTD)
+#define MINUTE_PULSE_PIN_BIT (_BV(PD2))
+
+void set_start_of_hour(const bool value) {
+  if( value ) {
+    HOUR_PULSE_PIN_PORT |= HOUR_PULSE_PIN_BIT;
+  } else {
+    HOUR_PULSE_PIN_PORT &= ~HOUR_PULSE_PIN_BIT;
+  }
+}
+
+void set_start_of_minute(const bool value) {
+  if( value ) {
+    MINUTE_PULSE_PIN_PORT |= MINUTE_PULSE_PIN_BIT;
+  } else {
+    MINUTE_PULSE_PIN_PORT &= ~MINUTE_PULSE_PIN_BIT;
+  }
+}
+
+static const unsigned short servo_scale_minutes = 31;
+static const unsigned short servo_scale_hours = 155;
+static const unsigned short servo_offset_minutes = 544;
+static const unsigned short servo_offset_hours = 544;
+
+unsigned short meter_m_value(unsigned char minute) {
+  // 0-60 mapped to 0-255
+  return (minute * 4) + (minute / 4);
+}
+
+unsigned short meter_h_value(unsigned char hour) {
+  // 0-12 mapped to 0-255
+  return (hour * 21) + (hour / 4);
+}
+
+unsigned short meter_s_value(unsigned char second) {
+  // 0-60 mapped to 0-255
+  return (second * 4) + (second / 4);
+}
+
+unsigned short meter_ms_value(unsigned char tick) {
+  // 0-127 mapped to 0-254
+  return tick * 2;
+}
+
+unsigned short servo_h_value(unsigned char hour) {
+  return hour * servo_scale_hours + servo_offset_hours;
+}
+
+unsigned short servo_m_value(unsigned char minute) {
+  return minute * servo_scale_minutes + servo_offset_minutes;
+}
+
+void time_hour_changed(unsigned char new_value) {
+  if( meter_mode == METER_MODE_SHOW_TIME ) {
+	METER_H = meter_h_value(new_value);
+    SERVO_H = servo_h_value(new_value);
+  }
+}
+
+void time_minute_changed(unsigned char new_value) {
+  if( meter_mode == METER_MODE_SHOW_TIME ) {
+	METER_M = meter_m_value(new_value);
+	SERVO_M = servo_m_value(new_value);
+  }
+  set_start_of_hour(new_value == 0);
+}
+
+void time_second_changed(unsigned char new_value) {
+  if( meter_mode == METER_MODE_SHOW_TIME ) {
+	METER_S = meter_s_value(new_value);
+  }
+  set_start_of_minute(new_value == 0);
+}
+
+void time_tick_changed(unsigned char new_value) {
+  if( meter_mode == METER_MODE_SHOW_TIME ) {
+	METER_MS = meter_ms_value(new_value);
+  }
+}
+
+static Time time(time_hour_changed,
+				 time_minute_changed,
+				 time_second_changed,
+				 time_tick_changed);
+
+void update_time() {
+  METER_M = meter_m_value(time.get_minute());
+  METER_H = meter_h_value(time.get_hour());
+  METER_S = meter_s_value(time.get_second());
+  METER_MS = meter_ms_value(time.get_tick());
+  SERVO_M = servo_m_value(time.get_minute());
+  SERVO_H = servo_h_value(time.get_hour());
+}
+
+void update_calibrate_zero_scale() {
+  METER_M = meter_m_value(0);
+  METER_H = meter_h_value(0);
+  METER_S = meter_s_value(0);
+  METER_MS = meter_ms_value(0);
+  SERVO_M = servo_m_value(0);
+  SERVO_H = servo_h_value(0);
+}
+
+void update_calibrate_full_scale() {
+  METER_M = meter_m_value(Time::minutesPerHour);
+  METER_H = meter_h_value(Time::maximumHours);
+  METER_S = meter_s_value(Time::secondsPerMinute);
+  METER_MS = meter_ms_value(Time::ticksPerSecond - 1);
+  SERVO_M = servo_m_value(Time::minutesPerHour);
+  SERVO_H = servo_h_value(Time::maximumHours);
+}
+
+void update_all() {
+  switch(meter_mode) {
+  default:
+  case METER_MODE_SHOW_TIME:
+    update_time();
+    break;
+
+  case METER_MODE_CALIBRATE_ZERO_SCALE:
+    update_calibrate_zero_scale();
+    break;
+
+  case METER_MODE_CALIBRATE_FULL_SCALE:
+    update_calibrate_full_scale();
+    break;
+  }
+}
+
+void set_mode_show_time() {
+  meter_mode = METER_MODE_SHOW_TIME;
+  update_all();
+}
+
+void set_mode_calibrate_zero_scale() {
+  meter_mode = METER_MODE_CALIBRATE_ZERO_SCALE;
+  update_all();
+}
+
+void set_mode_calibrate_full_scale() {
+  meter_mode = METER_MODE_CALIBRATE_FULL_SCALE;
+  update_all();
+}
+
 void hours_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
     if( minutes_button_active ) {
-      subtract_minute();
+      time.subtract_minute();
       set_mode_calibrate_zero_scale();
     } else {
-      add_hour();
-      show_time();
+      time.add_hour();
     }
     break;
     
@@ -92,11 +386,10 @@ void minutes_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
     if( hours_button_active ) {
-      subtract_hour();
+      time.subtract_hour();
       set_mode_calibrate_zero_scale();
     } else {
-      add_minute();
-      show_time();
+      time.add_minute();
     }
     break;
     
@@ -158,177 +451,6 @@ void debounce_buttons() {
       }
     } else {
       debounce_counter_minutes = 0;
-    }
-  }
-}
-
-static const unsigned char ticksPerSecond = 128;
-static const unsigned char secondsPerMinute = 60;
-static const unsigned char minutesPerHour = 60;
-static const unsigned char maximumHours = 12;
-
-static unsigned char hour = maximumHours / 2;
-static unsigned char minute = minutesPerHour / 2;
-static unsigned char second = 0;
-static unsigned char tick = 0;
-
-static unsigned char meter_m_value = 0;
-static unsigned char meter_h_value = 0;
-static unsigned char meter_s_value = 0;
-static unsigned char meter_ms_value = 0;
-
-static const unsigned short servo_scale_minutes = 31;
-static const unsigned short servo_scale_hours = 155;
-static const unsigned short servo_offset_minutes = 544;
-static const unsigned short servo_offset_hours = 544;
-
-static unsigned short servo_m_value = servo_offset_minutes;
-static unsigned short servo_h_value = servo_offset_hours;
-
-unsigned short set_meter_m(unsigned char minute) {
-	// 0-60 mapped to 0-255
-	meter_m_value = (minute * 4) + (minute / 4);
-}
-
-unsigned short set_meter_h(unsigned char hour) {
-    // 0-12 mapped to 0-255
-	meter_h_value = (hour * 21) + (hour / 4);
-}
-
-unsigned short set_meter_s(unsigned char second) {
-	// 0-60 mapped to 0-255
-	meter_s_value = (second * 4) + (second / 4);
-}
-
-unsigned short set_meter_ms(unsigned char tick) {
-    // 0-127 mapped to 0-254
-	meter_ms_value = tick * 2;
-}
-
-void show_time() {
-  set_meter_m(minute);
-  set_meter_h(hour);
-  set_meter_s(second);
-  set_meter_ms(tick);
-  
-  servo_m_value = minute * servo_scale_minutes + servo_offset_minutes;
-  servo_h_value = hour * servo_scale_hours + servo_offset_hours;
-}
-
-void set_mode_show_time() {
-  meter_mode = METER_MODE_SHOW_TIME;
-  show_time();
-}
-
-void set_mode_calibrate_zero_scale() {
-  meter_mode = METER_MODE_CALIBRATE_ZERO_SCALE;
-  set_meter_m(0);
-  set_meter_h(0);
-  set_meter_s(0);
-  set_meter_ms(0);
-}
-
-void set_mode_calibrate_full_scale() {
-  meter_mode = METER_MODE_CALIBRATE_FULL_SCALE;
-  set_meter_m(minutesPerHour);
-  set_meter_h(maximumHours);
-  set_meter_s(secondsPerMinute);
-  set_meter_ms(ticksPerSecond - 1);
-}
-
-#define HOUR_PULSE_PIN_PORT (PORTD)
-#define HOUR_PULSE_PIN_BIT (_BV(PD4))
-
-#define MINUTE_PULSE_PIN_PORT (PORTD)
-#define MINUTE_PULSE_PIN_BIT (_BV(PD2))
-
-void set_start_of_hour(const bool value) {
-  if( value ) {
-    HOUR_PULSE_PIN_PORT |= HOUR_PULSE_PIN_BIT;
-  } else {
-    HOUR_PULSE_PIN_PORT &= ~HOUR_PULSE_PIN_BIT;
-  }
-}
-
-void set_start_of_minute(const bool value) {
-  if( value ) {
-    MINUTE_PULSE_PIN_PORT |= MINUTE_PULSE_PIN_BIT;
-  } else {
-    MINUTE_PULSE_PIN_PORT &= ~MINUTE_PULSE_PIN_BIT;
-  }
-}
-
-void tick_hour() {
-  if( hour < (maximumHours - 1) ) {
-    hour++;
-  } else {
-    hour = 0;
-  }
-  set_start_of_hour(true);
-}
-
-void tick_minute() {
-  if( minute < (minutesPerHour - 1) ) {
-    minute++;
-  } else {
-    minute = 0;
-    tick_hour();
-  }
-  set_start_of_minute(true);
-}
-
-void tick_second() {
-  if( second < (secondsPerMinute - 1) ) {
-    second++;
-    set_start_of_minute(false);
-    set_start_of_hour(false);
-  } else {
-    second = 0;
-    tick_minute();
-  }
-}
-
-void add_hour() {
-  if( hour < (maximumHours - 1) ) {
-    hour++;
-  } else {
-    hour = 0;
-  }
-}
-
-void subtract_hour() {
-  if( hour > 0 ) {
-    hour--;
-  } else {
-    hour = maximumHours - 1;
-  }
-}
-
-void add_minute() {
-  if( minute < (minutesPerHour - 1) ) {
-    minute++;
-  } else {
-    minute = 0;
-  }
-}
-
-void subtract_minute() {
-  if( minute > 0 ) {
-    minute--;
-  } else {
-    minute = minutesPerHour - 1;
-  }
-}
-
-void tick_tick() {
-  if( tick < (ticksPerSecond - 1) ) {
-    tick++;
-  } else {
-    tick = 0;
-    tick_second();
-    
-    if( meter_mode == METER_MODE_SHOW_TIME ) {
-      show_time();
     }
   }
 }
@@ -447,18 +569,12 @@ void set_power_mode() {
   } else {
     initialize_low_power_mode();
   }
+
+  update_all();
 }
 
 ISR(TIMER2_OVF_vect) {
-  METER_M = meter_m_value;
-  METER_H = meter_h_value;
-  METER_S = meter_s_value;
-  METER_MS = meter_ms_value;
-
-  SERVO_M = servo_m_value;
-  SERVO_H = servo_h_value;
-  
-  tick_tick();
+  time.tick();
 
   debounce_buttons();
   

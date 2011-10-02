@@ -42,8 +42,8 @@ static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
 
 static const unsigned char debounce_wait = 4;
 
-static unsigned char debounce_counter_s1 = 0;
-static unsigned char debounce_counter_s2 = 0;
+static unsigned char debounce_counter_hours = 0;
+static unsigned char debounce_counter_minutes = 0;
 
 static bool hours_button_active = false;
 static bool minutes_button_active = false;
@@ -134,13 +134,13 @@ void debounce_buttons() {
     }
   } else {
     if( (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) == 0 ) {
-      debounce_counter_s1++;
-      if( debounce_counter_s1 == debounce_wait ) {
+      debounce_counter_hours++;
+      if( debounce_counter_hours == debounce_wait ) {
         hours_button_active = true;
         hours_button_pressed();
       }
     } else {
-      debounce_counter_s1 = 0;
+      debounce_counter_hours = 0;
     }
   }
   
@@ -151,13 +151,13 @@ void debounce_buttons() {
     }
   } else {
     if( (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) == 0 ) {
-      debounce_counter_s2++;
-      if( debounce_counter_s2 == debounce_wait ) {
+      debounce_counter_minutes++;
+      if( debounce_counter_minutes == debounce_wait ) {
         minutes_button_active = true;
         minutes_button_pressed();
       }
     } else {
-      debounce_counter_s2 = 0;
+      debounce_counter_minutes = 0;
     }
   }
 }

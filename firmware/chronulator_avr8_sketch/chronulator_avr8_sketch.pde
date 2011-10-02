@@ -170,9 +170,6 @@ static unsigned char minute = minutesPerHour / 2;
 static unsigned char second = 0;
 static unsigned char tick = 0;
 
-static const unsigned char meter_scale_minutes = 4;
-static const unsigned char meter_scale_hours = 20;
-
 static unsigned char meter_m_value = 0;
 static unsigned char meter_h_value = 0;
 
@@ -184,9 +181,19 @@ static const unsigned short servo_offset_hours = 544;
 static unsigned short servo_m_value = servo_offset_minutes;
 static unsigned short servo_h_value = servo_offset_hours;
 
+unsigned short set_meter_m(unsigned char minute) {
+	// 0-60 mapped to 0-255
+	meter_m_value = (minute * 4) + (minute / 4);
+}
+
+unsigned short set_meter_h(unsigned char hour) {
+    // 0-12 mapped to 0-255
+	meter_h_value = (hour * 21) + (hour / 4);
+}
+
 void show_time() {
-  meter_m_value = minute * meter_scale_minutes;
-  meter_h_value = hour * meter_scale_hours;
+  set_meter_m(minute);
+  set_meter_h(hour);
   
   servo_m_value = minute * servo_scale_minutes + servo_offset_minutes;
   servo_h_value = hour * servo_scale_hours + servo_offset_hours;
@@ -199,21 +206,21 @@ void set_mode_show_time() {
 
 void set_mode_calibrate_zero_scale() {
   meter_mode = METER_MODE_CALIBRATE_ZERO_SCALE;
-  meter_m_value = 0;
-  meter_h_value = 0;
+  set_meter_m(0);
+  set_meter_h(0);
 }
 
 void set_mode_calibrate_full_scale() {
   meter_mode = METER_MODE_CALIBRATE_FULL_SCALE;
-  meter_m_value = minutesPerHour * meter_scale_minutes;
-  meter_h_value = maximumHours * meter_scale_hours;
+  set_meter_m(minutesPerHour);
+  set_meter_h(maximumHours);
 }
 
 void set_mode_serial_control() {
   if( meter_mode != METER_MODE_SERIAL_CONTROL ) {
     meter_mode = METER_MODE_SERIAL_CONTROL;
-    meter_m_value = 0;
-    meter_h_value = 0;
+    set_meter_m(0);
+    set_meter_h(0);
   }
 }
 

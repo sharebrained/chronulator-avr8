@@ -359,10 +359,6 @@ void waitForTimer2CycleToEnd() {
   while(ASSR & (_BV(OCR2AUB) | _BV(OCR2BUB)));
 }
 
-static bool timer0_enabled = false;
-static bool servos_enabled = false;
-static bool usart0_enabled = false;
-
 void enable_timer0() {
   power_timer0_enable();
   
@@ -376,13 +372,6 @@ void enable_timer0() {
   TCCR0B = _BV(CS01) | _BV(CS00);
   
   TIFR0 = 0;
-
-  timer0_enabled = true;
-}
-
-void disable_timer0() {
-  timer0_enabled = false;
-  power_timer0_disable();
 }
 
 void enable_s_and_ms_meters() {
@@ -390,13 +379,6 @@ void enable_s_and_ms_meters() {
 
   // TODO: PORTD settings?
   DDRD |= _BV(DDD6) | _BV(DDD5);
-}
-
-void disable_s_and_ms_meters() {
-  DDRD &= ~(_BV(DDD6) | _BV(DDD5));
-  // TODO: PORTD settings?
-  
-  disable_timer0();
 }
 
 void enable_usart0() {
@@ -413,17 +395,6 @@ void enable_usart0() {
   // TODO: Reset command parser
   Serial.println(VERSION_RELEASE);
   Serial.println("READY");
-  
-  usart0_enabled = true;
-}
-
-void disable_usart0() {
-  usart0_enabled = false;
-
-  DDRD &= ~(_BV(DDD1) | _BV(DDD0));
-  PORTD &= ~(_BV(PD1) | _BV(PD0));
-  
-  power_usart0_disable();
 }
 
 void enable_servos() {
@@ -435,8 +406,6 @@ void enable_servos() {
   TCNT1 = 0;
   OCR1A = 0;
   OCR1B = 0;
-  
-  servos_enabled = true;
 }
 
 typedef enum _PowerMode {
@@ -446,7 +415,7 @@ typedef enum _PowerMode {
 
 static PowerMode power_mode = POWER_MODE_LOW_POWER;
 
-void switch_to_high_power_mode() {
+void initialize_high_power_mode() {
   set_sleep_mode(SLEEP_MODE_IDLE);
   clock_prescale_set(clock_div_1);
   enable_s_and_ms_meters();
@@ -455,26 +424,20 @@ void switch_to_high_power_mode() {
   power_mode = POWER_MODE_HIGH_POWER;
 }
 
-void switch_to_low_power_mode() {
+void initialize_low_power_mode() {
   power_mode = POWER_MODE_LOW_POWER;
   clock_prescale_set(clock_div_2);
-  disable_usart0();
-  disable_s_and_ms_meters();
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 }
 
 #define POWER_MODE_PIN_PORT (PINC)
 #define POWER_MODE_PIN_BIT (_BV(PINC1))
 
-void update_power_mode() {
+void set_power_mode() {
   if( (POWER_MODE_PIN_PORT & POWER_MODE_PIN_BIT) == 0 ) {
-    if( power_mode != POWER_MODE_HIGH_POWER ) {
-      switch_to_high_power_mode();
-    }
+    initialize_high_power_mode();
   } else {
-    if( power_mode != POWER_MODE_LOW_POWER ) {
-      switch_to_low_power_mode();
-    }
+    initialize_low_power_mode();
   }
 }
 
@@ -602,7 +565,7 @@ void setup() {
   
   initializeTimer2For32KHzCrystal();
 
-  update_power_mode();
+  set_power_mode();
   
   sei();
 }

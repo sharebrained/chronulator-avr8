@@ -416,17 +416,35 @@ typedef enum _PowerMode {
 static PowerMode power_mode = POWER_MODE_LOW_POWER;
 
 void initialize_high_power_mode() {
-  set_sleep_mode(SLEEP_MODE_IDLE);
+  power_mode = POWER_MODE_HIGH_POWER;
+
+  // Clock is internal RC at 8MHz, assuming operation from a voltage
+  // supply >= 2.5V. (See data sheet section 29.3 "Speed Grades".)
   clock_prescale_set(clock_div_1);
+
   enable_s_and_ms_meters();
   enable_usart0();
   enable_servos();
-  power_mode = POWER_MODE_HIGH_POWER;
+
+  // Use idle sleep mode, which allows all the peripherals to continue
+  // operating during sleep. This is what enables lots of cool features
+  // at the expensive of high power consumption -- too high to run from
+  // batteries for a decent amount of time.
+  set_sleep_mode(SLEEP_MODE_IDLE);
 }
 
 void initialize_low_power_mode() {
   power_mode = POWER_MODE_LOW_POWER;
+
+  // Clock is internal RC at 8MHz, scaled to 4MHz to stay within
+  // clock rate limitations for voltage supply < 2.5V.
+  // (See data sheet section 29.3 "Speed Grades".)
   clock_prescale_set(clock_div_2);
+
+  // Use power-save mode mode, which shuts down all sections of the AVR
+  // except for the asynchronous clock (the 32.768kHz crystal), timer 2
+  // (which is driving the hours/minutes meters), and a few other
+  // uninteresting peripherals.
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 }
 

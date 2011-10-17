@@ -1,13 +1,13 @@
 chronulator-avr8
+================
+
 by ShareBrained Technology
 
-http://www.sharebrained.com/chronulator/
-
 The latest version of this repository can be found at:
+<https://github.com/sharebrained/chronulator-avr8>
 
-    https://github.com/sharebrained/chronulator-avr8
-
-=== Description ===
+Description
+===========
 
 An analog panel meter clock implementation based on the
 Atmel AVR8 microcontroller.
@@ -26,30 +26,38 @@ via commands, overriding the default time-based
 control. The brightness of two LEDs can be controlled
 by other commands.
 
-=== Documentation ===
+Documentation
+=============
 
 See http://www.sharebrained.com/chronulator/ for
 hardware documentation.
 
-=== Requirements ===
+Requirements
+============
 
-Software:
-Arduino IDE (to program the Chronulator firmware)
-avrdude (to program the AVR8 bootloader)
-avr-gcc (to compile and link the bootloader)
-EAGLE 5.x (to edit the schematic or circuit board)
+Software
+--------
 
-Hardware:
-A Chronulator or Chronulator-compatible device.
-A serial adaptor and/or an Atmel ISP programmer.
+* Arduino IDE (to program the Chronulator firmware)
+* avrdude (to program the AVR8 bootloader)
+* avr-gcc (to compile and link the bootloader)
+* EAGLE 5.x (to edit the schematic or circuit board)
 
-=== Usage ===
+Hardware
+--------
+
+* A Chronulator or Chronulator-compatible device.
+* A serial adaptor and/or an Atmel ISP programmer.
+
+Usage
+=====
 
 Before compiling and uploading this code in the Arduino
 IDE, please select "LilyPad Arduino w/ ATmega168" under
 the "Tools->Board" menu.
 
-=== Contact ===
+Contact
+=======
 
 ShareBrained Technology, Inc.
-http://www.sharebrained.com/
+<http://www.sharebrained.com/>

@@ -31,6 +31,14 @@
 #define VERSION_RELEASE "200812090122"
 #define F_CPU 4000000
 
+static const unsigned short servo_cycle_time = 20000;
+
+static const unsigned short servo_center_minutes = 1500;
+static const unsigned short servo_center_hours = 1500;
+
+static const unsigned short servo_range_minutes = 1800;
+static const unsigned short servo_range_hours = 1800;
+
 typedef enum meter_mode {
   METER_MODE_SHOW_TIME = 0,
   METER_MODE_CALIBRATE_ZERO_SCALE = 1,
@@ -225,14 +233,6 @@ void set_start_of_minute(const bool value) {
     MINUTE_PULSE_PIN_PORT &= ~MINUTE_PULSE_PIN_BIT;
   }
 }
-
-static const unsigned short servo_cycle_time = 20000;
-
-static const unsigned short servo_center_minutes = 1500;
-static const unsigned short servo_center_hours = 1500;
-
-static const unsigned short servo_range_minutes = 1800;
-static const unsigned short servo_range_hours = 1800;
 
 static const unsigned short servo_offset_minutes = servo_center_minutes - (servo_range_minutes / 2);
 static const unsigned short servo_offset_hours = servo_center_hours - (servo_range_hours / 2);

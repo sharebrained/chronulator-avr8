@@ -43,7 +43,6 @@ typedef enum meter_mode {
   METER_MODE_SHOW_TIME = 0,
   METER_MODE_CALIBRATE_ZERO_SCALE = 1,
   METER_MODE_CALIBRATE_FULL_SCALE = 2,
-  METER_MODE_SERIAL_CONTROL = 3
 } meter_mode_t;
 
 static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
@@ -502,22 +501,6 @@ void enable_s_and_ms_meters() {
   DDRD |= _BV(DDD6) | _BV(DDD5);
 }
 
-void enable_usart0() {
-  power_usart0_enable();
-
-  // PD0: I, pullup: RXD Serial RX (DDD0=0, PD0=1)
-  // PD1: O: TXD Serial TX (DDD1=1, PD1=1)
-  DDRD &= ~_BV(DDD0);
-  DDRD |= _BV(DDD1);
-  PORTD |= _BV(PD1) | _BV(PD0);
-  
-  Serial.begin(9600);
-  
-  // TODO: Reset command parser
-  Serial.println(VERSION_RELEASE);
-  Serial.println("READY");
-}
-
 void enable_servos() {
   power_timer1_enable();
   
@@ -544,7 +527,6 @@ void initialize_high_power_mode() {
   clock_prescale_set(clock_div_1);
 
   enable_s_and_ms_meters();
-  enable_usart0();
   enable_servos();
 
   // Use idle sleep mode, which allows all the peripherals to continue

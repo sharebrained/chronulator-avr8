@@ -226,10 +226,19 @@ void set_start_of_minute(const bool value) {
   }
 }
 
-static const unsigned short servo_scale_minutes = 31;
-static const unsigned short servo_scale_hours = 155;
-static const unsigned short servo_offset_minutes = 544;
-static const unsigned short servo_offset_hours = 544;
+static const unsigned short servo_cycle_time = 20000;
+
+static const unsigned short servo_center_minutes = 1500;
+static const unsigned short servo_center_hours = 1500;
+
+static const unsigned short servo_range_minutes = 1800;
+static const unsigned short servo_range_hours = 1800;
+
+static const unsigned short servo_offset_minutes = servo_center_minutes - (servo_range_minutes / 2);
+static const unsigned short servo_offset_hours = servo_center_hours - (servo_range_hours / 2);
+
+static const unsigned short servo_scale_minutes = servo_range_minutes / Time::minutesPerHour;
+static const unsigned short servo_scale_hours = servo_range_hours / Time::maximumHours;
 
 unsigned short meter_m_value(unsigned char minute) {
   // 0-60 mapped to 0-255
@@ -252,11 +261,11 @@ unsigned short meter_ms_value(unsigned char tick) {
 }
 
 unsigned short servo_h_value(unsigned char hour) {
-  return hour * servo_scale_hours + servo_offset_hours;
+  return servo_offset_hours + hour * servo_scale_hours;
 }
 
 unsigned short servo_m_value(unsigned char minute) {
-  return minute * servo_scale_minutes + servo_offset_minutes;
+  return servo_offset_minutes + minute * servo_scale_minutes;
 }
 
 void time_hour_changed(unsigned char new_value) {
@@ -514,7 +523,7 @@ void enable_servos() {
   
   TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
   TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
-  ICR1 = 20000;
+  ICR1 = servo_cycle_time;
   TCNT1 = 0;
   OCR1A = 0;
   OCR1B = 0;

@@ -236,8 +236,8 @@ void set_start_of_minute(const bool value) {
 static const unsigned short servo_offset_minutes = servo_center_minutes - (servo_range_minutes / 2);
 static const unsigned short servo_offset_hours = servo_center_hours - (servo_range_hours / 2);
 
-static const unsigned short servo_scale_minutes = servo_range_minutes / Time::minutesPerHour;
-static const unsigned short servo_scale_hours = servo_range_hours / Time::maximumHours;
+static const unsigned short servo_scale_minutes = servo_range_minutes / (Time::minutesPerHour - 1);
+static const unsigned short servo_scale_hours = servo_range_hours / (Time::maximumHours - 1);
 
 unsigned short meter_m_value(unsigned char minute) {
   // 0-60 mapped to 0-255

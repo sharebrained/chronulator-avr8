@@ -562,21 +562,6 @@ void set_power_mode() {
 
 ISR(TIMER2_OVF_vect) {
   time.tick();
-
-  debounce_buttons();
-  
-  // Ensure TOSC cycle will not cause extra interrupts.
-  // a. Write a value to TCCR2x, TCNT2, or OCR2x. 
-  // b. Wait until the corresponding Update Busy Flag in ASSR returns to zero. 
-  // c. Enter Power-save or ADC Noise Reduction mode.
-
-  // Can't re-enter power save mode until the TOSC1 cycle that woke us is
-  // complete. Use the writes to OCR2A/B, performed earlier in this interrupt
-  // routine, to indicate when the cycle is over. The ASSR OCR2xUB flags will
-  // clear when the cycle is over.
-  if( sleepModeCausesSpuriousTimer2Interrupts() ) {
-    waitForTimer2CycleToEnd();
-  }
 }
 
 void initializePorts() {
@@ -682,5 +667,24 @@ void setup() {
 }
 
 void loop() {
+  // Ensure TOSC cycle will not cause extra interrupts.
+  // a. Write a value to TCCR2x, TCNT2, or OCR2x. 
+  // b. Wait until the corresponding Update Busy Flag in ASSR returns to zero. 
+  // c. Enter Power-save or ADC Noise Reduction mode.
+
+  // Can't re-enter power save mode until the TOSC1 cycle that woke us is
+  // complete. Use the writes to OCR2A/B, performed earlier in this interrupt
+  // routine, to indicate when the cycle is over. The ASSR OCR2xUB flags will
+  // clear when the cycle is over.
+  if( sleepModeCausesSpuriousTimer2Interrupts() ) {
+    waitForTimer2CycleToEnd();
+  }
+
   sleep_mode();
+
+  // Timer 2 interrupt will wake the AVR from the above sleep.
+  // The interrupt will execute and return, then this code will
+  // be executed.
+
+  debounce_buttons();
 }

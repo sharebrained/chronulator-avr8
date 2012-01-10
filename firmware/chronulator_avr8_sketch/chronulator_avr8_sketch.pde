@@ -33,8 +33,8 @@
 
 static const unsigned short servo_cycle_time = 20000;
 
-static const unsigned short servo_center_minutes = 1500;
-static const unsigned short servo_center_hours = 1500;
+static const unsigned short servo_center_minutes = 1400;
+static const unsigned short servo_center_hours = 1400;
 
 static const unsigned short servo_range_minutes = 1800;
 static const unsigned short servo_range_hours = 1800;

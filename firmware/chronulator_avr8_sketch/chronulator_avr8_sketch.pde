@@ -195,14 +195,6 @@ private:
 	}
 };
 
-static const unsigned char debounce_wait = 4;
-
-static unsigned char debounce_counter_hours = 0;
-static unsigned char debounce_counter_minutes = 0;
-
-static bool hours_button_active = false;
-static bool minutes_button_active = false;
-
 #define METER_M OCR2A
 #define METER_H OCR2B
 #define METER_S OCR0A
@@ -362,55 +354,18 @@ void set_mode_calibrate_full_scale() {
 void hours_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
-    if( minutes_button_active ) {
-      time.subtract_minute();
-      set_mode_calibrate_zero_scale();
-    } else {
-      time.add_hour();
-    }
-    break;
-    
-  case METER_MODE_CALIBRATE_ZERO_SCALE:
-    if( minutes_button_active ) {
-      set_mode_calibrate_full_scale();
-    }
-    break;
-    
-  case METER_MODE_CALIBRATE_FULL_SCALE:
-    if( minutes_button_active ) {
-      set_mode_show_time();
-    }
+    time.add_hour();
     break;
     
   default:
     break;
   }
-}
-
-void hours_button_released() {
 }
 
 void minutes_button_pressed() {
   switch( meter_mode ) {
   case METER_MODE_SHOW_TIME:
-    if( hours_button_active ) {
-      time.subtract_hour();
-      set_mode_calibrate_zero_scale();
-    } else {
-      time.add_minute();
-    }
-    break;
-    
-  case METER_MODE_CALIBRATE_ZERO_SCALE:
-    if( hours_button_active ) {
-      set_mode_calibrate_full_scale();
-    }
-    break;
-    
-  case METER_MODE_CALIBRATE_FULL_SCALE:
-    if( hours_button_active ) {
-      set_mode_show_time();
-    }
+    time.add_minute();
     break;
     
   default:
@@ -418,7 +373,24 @@ void minutes_button_pressed() {
   }
 }
 
-void minutes_button_released() {
+void both_buttons_pressed() {
+    switch( meter_mode ) {
+    case METER_MODE_SHOW_TIME:
+        set_mode_calibrate_zero_scale();
+        break;
+        
+    case METER_MODE_CALIBRATE_ZERO_SCALE:
+        set_mode_calibrate_full_scale();
+        break;
+        
+    case METER_MODE_CALIBRATE_FULL_SCALE:
+        set_mode_show_time();
+        break;
+        
+    default:
+        set_mode_show_time();
+        break;
+    }
 }
 
 #define HOURS_BUTTON_PORT PINB
@@ -427,40 +399,64 @@ void minutes_button_released() {
 #define MINUTES_BUTTON_PORT PIND
 #define MINUTES_BUTTON_BIT _BV(PIND7)
 
+bool is_hours_button_pressed() {
+    return (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) ? true : false;
+}
+
+bool is_minutes_button_pressed() {
+    return (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) ? true : false;
+}
+
+typedef enum button_mode {
+    BUTTON_MODE_NONE = 0,
+    BUTTON_MODE_HOURS = 1,
+    BUTTON_MODE_MINUTES = 2,
+    BUTTON_MODE_BOTH = 3,
+} button_mode_t;
+
+static const unsigned char debounce_wait = 4;
+static unsigned char debounce_counter = 0;
+
+static button_mode_t button_mode = BUTTON_MODE_NONE;
+
+button_mode_t read_button_mode() {
+    const int result = 
+        (is_hours_button_pressed()   ? BUTTON_MODE_HOURS   : 0) |
+        (is_minutes_button_pressed() ? BUTTON_MODE_MINUTES : 0);
+    return (button_mode_t)result;
+}
+
 void debounce_buttons() {
-  if( hours_button_active ) {
-    if( HOURS_BUTTON_PORT & HOURS_BUTTON_BIT ) {
-      hours_button_active = false;
-      hours_button_released();
-    }
-  } else {
-    if( (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) == 0 ) {
-      debounce_counter_hours++;
-      if( debounce_counter_hours == debounce_wait ) {
-        hours_button_active = true;
-        hours_button_pressed();
-      }
+    const button_mode_t button_mode_before = button_mode;
+    const button_mode_t button_mode_now = read_button_mode();
+    if( button_mode_now != button_mode ) {
+        debounce_counter += 1;
+        if( debounce_counter == debounce_wait ) {
+            // Button mode is stable, allow it to change.
+            button_mode = button_mode_now;
+            if( button_mode_before == BUTTON_MODE_NONE ) {
+                // fire an event if the prior state was "no buttons pressed".
+                switch( button_mode_now ) {
+                case BUTTON_MODE_HOURS:
+                    hours_button_pressed();
+                    break;
+                    
+                case BUTTON_MODE_MINUTES:
+                    minutes_button_pressed();
+                    break;
+                    
+                case BUTTON_MODE_BOTH:
+                    both_buttons_pressed();
+                    break;
+                    
+                default:
+                    break;
+                }
+            }
+        }
     } else {
-      debounce_counter_hours = 0;
+        debounce_counter = 0;
     }
-  }
-  
-  if( minutes_button_active ) {
-    if( MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT ) {
-      minutes_button_active = false;
-      minutes_button_released();
-    }
-  } else {
-    if( (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) == 0 ) {
-      debounce_counter_minutes++;
-      if( debounce_counter_minutes == debounce_wait ) {
-        minutes_button_active = true;
-        minutes_button_pressed();
-      }
-    } else {
-      debounce_counter_minutes = 0;
-    }
-  }
 }
 
 bool sleepModeCausesSpuriousTimer2Interrupts() {

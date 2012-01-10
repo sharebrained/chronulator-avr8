@@ -212,10 +212,10 @@ static bool minutes_button_active = false;
 #define SERVO_H OCR1B
 
 #define HOUR_PULSE_PIN_PORT (PORTD)
-#define HOUR_PULSE_PIN_BIT (_BV(PD4))
+#define HOUR_PULSE_PIN_BIT (_BV(PORTD4))
 
 #define MINUTE_PULSE_PIN_PORT (PORTD)
-#define MINUTE_PULSE_PIN_BIT (_BV(PD2))
+#define MINUTE_PULSE_PIN_BIT (_BV(PORTD2))
 
 void set_start_of_hour(const bool value) {
   if( value ) {
@@ -595,7 +595,7 @@ void initializePorts() {
   // PB6: I: TOSC1 (crystal) (DDB6=0, PB6=0)
   // PB7: I: TOSC2 (crystal) (DDB7=0, PB7=0)
   DDRB = _BV(DDB2) | _BV(DDB1);
-  PORTB = _BV(PB0);
+  PORTB = _BV(PORTB0);
 
   // PC0: I, pullup: High-power mode detect (DDC0=0, PC0=1)
   // PC1: I, pullup: DC plug present (DDC1=0, PC1=1)
@@ -606,7 +606,7 @@ void initializePorts() {
   // PC6: I: RESET
   // PC7: I: (no pin)
   DDRC = 0;
-  PORTC = _BV(PC1) | _BV(PC0);
+  PORTC = _BV(PORTC1) | _BV(PORTC0);
 
   // PD0: I: RXD Serial RX (DDD0=0, PD0=1)
   // PD1: O: TXD Serial TX (DDD1=1, PD1=1)
@@ -617,7 +617,7 @@ void initializePorts() {
   // PD6: O: OC0A PWM output, LED (DDD6=1, PD6=0)
   // PD7: I, pullup: Switch (DDD7=0, PD7=1)
   DDRD = _BV(DDD2) | _BV(DDD4);
-  PORTD = _BV(PD7);
+  PORTD = _BV(PORTD7);
 
   // Do not disable internal pull-up resistors on ports.
   MCUCR &= ~_BV(PUD);

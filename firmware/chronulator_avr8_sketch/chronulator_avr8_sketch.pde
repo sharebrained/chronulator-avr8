@@ -49,25 +49,15 @@ static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
 
 class Time {
 public:
-	typedef void (*ValueUpdateCallback)(unsigned char new_value);
-
-	Time(const ValueUpdateCallback callback_hour,
-		 const ValueUpdateCallback callback_minute,
-		 const ValueUpdateCallback callback_second,
-		 const ValueUpdateCallback callback_tick) :
+	Time() :
 		hour_(maximumHours / 2),
 		minute_(minutesPerHour / 2),
 		second_(0),
-		tick_(0),
-		callback_hour_(callback_hour),
-		callback_minute_(callback_minute),
-		callback_second_(callback_second),
-		callback_tick_(callback_tick) {
+		tick_(0) {
 	}
 
 	void set_hour(unsigned char new_value) {
 	  hour_ = new_value;
-	  callback_hour_(hour_);
 	}
 
 	unsigned char get_hour() {
@@ -76,7 +66,6 @@ public:
 
 	void set_minute(unsigned char new_value) {
 	  minute_ = new_value;
-	  callback_minute_(minute_);
 	}
 
 	unsigned char get_minute() {
@@ -85,7 +74,6 @@ public:
 
 	void set_second(unsigned char new_value) {
 	  second_ = new_value;
-	  callback_second_(second_);
 	}
 
 	unsigned char get_second() {
@@ -94,7 +82,6 @@ public:
 
 	void set_tick(unsigned char new_value) {
 	  tick_ = new_value;
-	  callback_tick_(tick_);
 	}
 
 	unsigned char get_tick() {
@@ -147,11 +134,6 @@ private:
 	unsigned char minute_;
 	unsigned char second_;
 	unsigned char tick_;
-
-	const ValueUpdateCallback callback_hour_;
-	const ValueUpdateCallback callback_minute_;
-	const ValueUpdateCallback callback_second_;
-	const ValueUpdateCallback callback_tick_;
 
 	void advance_hour() {
       add_hour();
@@ -259,38 +241,7 @@ unsigned short servo_m_value(unsigned char minute) {
   return servo_offset_minutes + minute * servo_scale_minutes;
 }
 
-void time_hour_changed(unsigned char new_value) {
-  if( meter_mode == METER_MODE_SHOW_TIME ) {
-	METER_H = meter_h_value(new_value);
-    SERVO_H = servo_h_value(new_value);
-  }
-}
-
-void time_minute_changed(unsigned char new_value) {
-  if( meter_mode == METER_MODE_SHOW_TIME ) {
-	METER_M = meter_m_value(new_value);
-	SERVO_M = servo_m_value(new_value);
-  }
-  set_start_of_hour(new_value == 0);
-}
-
-void time_second_changed(unsigned char new_value) {
-  if( meter_mode == METER_MODE_SHOW_TIME ) {
-	METER_S = meter_s_value(new_value);
-  }
-  set_start_of_minute(new_value == 0);
-}
-
-void time_tick_changed(unsigned char new_value) {
-  if( meter_mode == METER_MODE_SHOW_TIME ) {
-	METER_MS = meter_ms_value(new_value);
-  }
-}
-
-static Time time(time_hour_changed,
-				 time_minute_changed,
-				 time_second_changed,
-				 time_tick_changed);
+static Time time;
 
 void update_time() {
   METER_M = meter_m_value(time.get_minute());
@@ -334,21 +285,29 @@ void update_all() {
     update_calibrate_full_scale();
     break;
   }
+
+  // Update the top-of-the-hour and top-of-the-minute signals.
+  if( time.get_second() == 0 ) {
+    set_start_of_minute(true);
+    if( time.get_minute() == 0 ) {
+      set_start_of_hour(true);
+    }
+  } else {
+    set_start_of_minute(false);
+    set_start_of_hour(false);
+  }
 }
 
 void set_mode_show_time() {
   meter_mode = METER_MODE_SHOW_TIME;
-  update_all();
 }
 
 void set_mode_calibrate_zero_scale() {
   meter_mode = METER_MODE_CALIBRATE_ZERO_SCALE;
-  update_all();
 }
 
 void set_mode_calibrate_full_scale() {
   meter_mode = METER_MODE_CALIBRATE_FULL_SCALE;
-  update_all();
 }
 
 void hours_button_pressed() {
@@ -687,4 +646,5 @@ void loop() {
   // be executed.
 
   debounce_buttons();
+  update_all();
 }

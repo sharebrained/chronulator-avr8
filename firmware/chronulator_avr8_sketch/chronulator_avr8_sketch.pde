@@ -311,25 +311,15 @@ void set_mode_calibrate_full_scale() {
 }
 
 void hours_button_pressed() {
-  switch( meter_mode ) {
-  case METER_MODE_SHOW_TIME:
-    time.add_hour();
-    break;
-    
-  default:
-    break;
-  }
+    if( meter_mode == METER_MODE_SHOW_TIME ) {
+        time.add_hour();
+    }
 }
 
 void minutes_button_pressed() {
-  switch( meter_mode ) {
-  case METER_MODE_SHOW_TIME:
-    time.add_minute();
-    break;
-    
-  default:
-    break;
-  }
+    if( meter_mode == METER_MODE_SHOW_TIME ) {
+        time.add_minute();
+    }
 }
 
 void both_buttons_pressed() {

@@ -47,6 +47,11 @@ typedef enum meter_mode {
 
 static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
 
+void update_hour_indicators();
+void update_minute_indicators();
+void update_second_indicators();
+void update_tick_indicators();
+
 class Time {
 public:
 	Time() :
@@ -58,6 +63,7 @@ public:
 
 	void set_hour(unsigned char new_value) {
 	  hour_ = new_value;
+       update_hour_indicators();
 	}
 
 	unsigned char get_hour() const {
@@ -66,6 +72,7 @@ public:
 
 	void set_minute(unsigned char new_value) {
 	  minute_ = new_value;
+	  update_minute_indicators();
 	}
 
 	unsigned char get_minute() const {
@@ -74,6 +81,7 @@ public:
 
 	void set_second(unsigned char new_value) {
 	  second_ = new_value;
+	  update_second_indicators();
 	}
 
 	unsigned char get_second() const {
@@ -82,6 +90,7 @@ public:
 
 	void set_tick(unsigned char new_value) {
 	  tick_ = new_value;
+	  update_tick_indicators();
 	}
 
 	unsigned char get_tick() const {
@@ -247,59 +256,105 @@ unsigned short servo_m_value(unsigned char minute) {
 
 static Time time;
 
-void update_time() {
-  METER_M = meter_m_value(time.get_minute());
-  METER_H = meter_h_value(time.get_hour());
-  METER_S = meter_s_value(time.get_second());
-  METER_MS = meter_ms_value(time.get_tick());
-  SERVO_M = servo_m_value(time.get_minute());
-  SERVO_H = servo_h_value(time.get_hour());
+void set_hour_indicators(const unsigned char hour) {
+    METER_H = meter_h_value(hour);
+    SERVO_H = servo_h_value(hour);
 }
 
-void update_calibrate_zero_scale() {
-  METER_M = meter_m_value(0);
-  METER_H = meter_h_value(0);
-  METER_S = meter_s_value(0);
-  METER_MS = meter_ms_value(0);
-  SERVO_M = servo_m_value(0);
-  SERVO_H = servo_h_value(0);
+void set_minute_indicators(const unsigned char minute) {
+    METER_M = meter_m_value(minute);
+    SERVO_M = servo_m_value(minute);
 }
 
-void update_calibrate_full_scale() {
-  METER_M = meter_m_value(Time::minutesPerHour);
-  METER_H = meter_h_value(Time::maximumHours);
-  METER_S = meter_s_value(Time::secondsPerMinute);
-  METER_MS = meter_ms_value(Time::ticksPerSecond);
-  SERVO_M = servo_m_value(Time::minutesPerHour);
-  SERVO_H = servo_h_value(Time::maximumHours);
+void set_second_indicators(const unsigned char second) {
+    METER_S = meter_s_value(second);
+}
+
+void set_tick_indicators(const unsigned char tick) {
+    METER_MS = meter_ms_value(tick);
+}
+
+void update_hour_indicators() {
+    unsigned char value;
+    switch( meter_mode ) {
+    default:
+    case METER_MODE_SHOW_TIME:
+        value = time.get_hour();
+        break;
+        
+    case METER_MODE_CALIBRATE_ZERO_SCALE:
+        value = 0;
+        break;
+        
+    case METER_MODE_CALIBRATE_FULL_SCALE:
+        value = Time::maximumHours;
+        break;
+    }
+    set_hour_indicators(value);
+}
+
+void update_minute_indicators() {
+    unsigned char value = time.get_minute();
+    if( value == 0 ) {
+        set_start_of_hour(true);
+    }
+    
+    switch( meter_mode ) {
+    case METER_MODE_CALIBRATE_ZERO_SCALE:
+        value = 0;
+        break;
+        
+    case METER_MODE_CALIBRATE_FULL_SCALE:
+        value = Time::minutesPerHour;
+        break;
+    }
+    set_minute_indicators(value);
+}
+
+void update_second_indicators() {
+    unsigned char value = time.get_second();
+    if( value == 0 ) {
+        set_start_of_minute(true);
+    } else {
+        set_start_of_minute(false);
+        set_start_of_hour(false);
+    }
+    
+    switch( meter_mode ) {
+    case METER_MODE_CALIBRATE_ZERO_SCALE:
+        value = 0;
+        break;
+        
+    case METER_MODE_CALIBRATE_FULL_SCALE:
+        value = Time::secondsPerMinute;
+        break;
+    }
+    set_second_indicators(value);
+}
+
+void update_tick_indicators() {
+    unsigned char value;
+    switch( meter_mode ) {
+    case METER_MODE_SHOW_TIME:
+        value = time.get_tick();
+        break;
+        
+    case METER_MODE_CALIBRATE_ZERO_SCALE:
+        value = 0;
+        break;
+        
+    case METER_MODE_CALIBRATE_FULL_SCALE:
+        value = Time::ticksPerSecond;
+        break;
+    }
+    set_tick_indicators(value);
 }
 
 void update_all() {
-  switch(meter_mode) {
-  default:
-  case METER_MODE_SHOW_TIME:
-    update_time();
-    break;
-
-  case METER_MODE_CALIBRATE_ZERO_SCALE:
-    update_calibrate_zero_scale();
-    break;
-
-  case METER_MODE_CALIBRATE_FULL_SCALE:
-    update_calibrate_full_scale();
-    break;
-  }
-
-  // Update the top-of-the-hour and top-of-the-minute signals.
-  if( time.get_second() == 0 ) {
-    set_start_of_minute(true);
-    if( time.get_minute() == 0 ) {
-      set_start_of_hour(true);
-    }
-  } else {
-    set_start_of_minute(false);
-    set_start_of_hour(false);
-  }
+    update_hour_indicators();
+    update_minute_indicators();
+    update_second_indicators();
+    update_tick_indicators();   
 }
 
 void set_mode_show_time() {
@@ -344,6 +399,8 @@ void both_buttons_pressed() {
         set_mode_show_time();
         break;
     }
+
+    update_all();
 }
 
 #define HOURS_BUTTON_PORT PINB
@@ -644,5 +701,4 @@ void loop() {
   // be executed.
 
   debounce_buttons();
-  update_all();
 }

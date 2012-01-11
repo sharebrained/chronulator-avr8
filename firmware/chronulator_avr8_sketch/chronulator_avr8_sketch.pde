@@ -375,6 +375,25 @@ button_mode_t read_button_mode() {
     return (button_mode_t)result;
 }
 
+void fire_button_event(const button_mode_t button_mode) {
+    switch( button_mode ) {
+    case BUTTON_MODE_HOURS:
+        hours_button_pressed();
+        break;
+        
+    case BUTTON_MODE_MINUTES:
+        minutes_button_pressed();
+        break;
+        
+    case BUTTON_MODE_BOTH:
+        both_buttons_pressed();
+        break;
+        
+    default:
+        break;
+    }
+}
+
 void debounce_buttons() {
     const button_mode_t button_mode_before = button_mode;
     const button_mode_t button_mode_now = read_button_mode();
@@ -385,22 +404,7 @@ void debounce_buttons() {
             button_mode = button_mode_now;
             if( button_mode_before == BUTTON_MODE_NONE ) {
                 // fire an event if the prior state was "no buttons pressed".
-                switch( button_mode_now ) {
-                case BUTTON_MODE_HOURS:
-                    hours_button_pressed();
-                    break;
-                    
-                case BUTTON_MODE_MINUTES:
-                    minutes_button_pressed();
-                    break;
-                    
-                case BUTTON_MODE_BOTH:
-                    both_buttons_pressed();
-                    break;
-                    
-                default:
-                    break;
-                }
+                fire_button_event(button_mode);
             }
         }
     } else {

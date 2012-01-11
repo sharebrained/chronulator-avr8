@@ -353,11 +353,11 @@ void both_buttons_pressed() {
 #define MINUTES_BUTTON_BIT _BV(PIND7)
 
 bool is_hours_button_pressed() {
-    return (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) ? true : false;
+    return (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) ? false : true;
 }
 
 bool is_minutes_button_pressed() {
-    return (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) ? true : false;
+    return (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) ? false : true;
 }
 
 typedef enum button_mode {

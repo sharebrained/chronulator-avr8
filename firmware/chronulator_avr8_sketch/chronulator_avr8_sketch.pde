@@ -60,7 +60,7 @@ public:
 	  hour_ = new_value;
 	}
 
-	unsigned char get_hour() {
+	unsigned char get_hour() const {
 	  return hour_;
 	}
 
@@ -68,7 +68,7 @@ public:
 	  minute_ = new_value;
 	}
 
-	unsigned char get_minute() {
+	unsigned char get_minute() const {
 	  return minute_;
 	}
 
@@ -76,7 +76,7 @@ public:
 	  second_ = new_value;
 	}
 
-	unsigned char get_second() {
+	unsigned char get_second() const {
 	  return second_;
 	}
 
@@ -84,7 +84,7 @@ public:
 	  tick_ = new_value;
 	}
 
-	unsigned char get_tick() {
+	unsigned char get_tick() const {
 	  return tick_;
 	}
 

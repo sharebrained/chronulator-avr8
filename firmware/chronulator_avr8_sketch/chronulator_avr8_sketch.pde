@@ -229,8 +229,12 @@ unsigned short meter_s_value(unsigned char second) {
 }
 
 unsigned short meter_ms_value(unsigned char tick) {
-  // 0-127 mapped to 0-254
-  return tick * 2;
+  // 0-128 mapped to 0-255
+  if( tick > 127 ) {
+    return 255;
+  } else {
+    return tick * 2;
+  }
 }
 
 unsigned short servo_h_value(unsigned char hour) {
@@ -265,7 +269,7 @@ void update_calibrate_full_scale() {
   METER_M = meter_m_value(Time::minutesPerHour);
   METER_H = meter_h_value(Time::maximumHours);
   METER_S = meter_s_value(Time::secondsPerMinute);
-  METER_MS = meter_ms_value(Time::ticksPerSecond - 1);
+  METER_MS = meter_ms_value(Time::ticksPerSecond);
   SERVO_M = servo_m_value(Time::minutesPerHour);
   SERVO_H = servo_h_value(Time::maximumHours);
 }

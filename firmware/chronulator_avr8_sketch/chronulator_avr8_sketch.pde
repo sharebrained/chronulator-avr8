@@ -367,7 +367,7 @@ typedef enum button_mode {
     BUTTON_MODE_BOTH = 3,
 } button_mode_t;
 
-static const unsigned char debounce_wait = 4;
+static const unsigned char debounce_wait = 16;
 static unsigned char debounce_counter = 0;
 
 static button_mode_t button_mode = BUTTON_MODE_NONE;

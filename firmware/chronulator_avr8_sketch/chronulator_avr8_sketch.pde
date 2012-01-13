@@ -36,8 +36,8 @@ static const unsigned short servo_cycle_time = 20000;
 static const unsigned short servo_center_minutes = 1500;
 static const unsigned short servo_center_hours = 1500;
 
-static const unsigned short servo_range_minutes = 1800;
-static const unsigned short servo_range_hours = 1800;
+static const unsigned short servo_range_minutes = 900;
+static const unsigned short servo_range_hours = 900;
 
 typedef enum meter_mode {
   METER_MODE_SHOW_TIME = 0,

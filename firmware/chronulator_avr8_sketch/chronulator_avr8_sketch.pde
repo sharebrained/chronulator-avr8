@@ -47,11 +47,6 @@ typedef enum meter_mode {
 
 static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
 
-void update_hour_indicators();
-void update_minute_indicators();
-void update_second_indicators();
-void update_tick_indicators();
-
 class Time {
 public:
 	Time() :
@@ -63,7 +58,6 @@ public:
 
 	void set_hour(unsigned char new_value) {
 	  hour_ = new_value;
-       update_hour_indicators();
 	}
 
 	unsigned char get_hour() const {
@@ -72,7 +66,6 @@ public:
 
 	void set_minute(unsigned char new_value) {
 	  minute_ = new_value;
-	  update_minute_indicators();
 	}
 
 	unsigned char get_minute() const {
@@ -81,7 +74,6 @@ public:
 
 	void set_second(unsigned char new_value) {
 	  second_ = new_value;
-	  update_second_indicators();
 	}
 
 	unsigned char get_second() const {
@@ -90,7 +82,6 @@ public:
 
 	void set_tick(unsigned char new_value) {
 	  tick_ = new_value;
-	  update_tick_indicators();
 	}
 
 	unsigned char get_tick() const {
@@ -312,22 +303,36 @@ void update_servos_power() {
 }
 
 void set_hour_indicators(const unsigned char hour) {
-    METER_H = meter_h_value(hour);
-    SERVO_H = servo_h_value(hour);
-    enable_servo_h_power();
+    static unsigned char last_value = 255;
+    if( hour != last_value ) {
+        last_value = hour;
+        METER_H = meter_h_value(hour);
+        SERVO_H = servo_h_value(hour);
+        enable_servo_h_power();
+    }
 }
 
 void set_minute_indicators(const unsigned char minute) {
-    METER_M = meter_m_value(minute);
-    SERVO_M = servo_m_value(minute);
-    enable_servo_m_power();
+    static unsigned char last_value = 255;
+    if( minute != last_value ) {
+        last_value = minute;
+        METER_M = meter_m_value(minute);
+        SERVO_M = servo_m_value(minute);
+        enable_servo_m_power();
+    }
 }
 
 void set_second_indicators(const unsigned char second) {
-    METER_S = meter_s_value(second);
+    static unsigned char last_value = 255;
+    if( second != last_value ) {
+        last_value = second;
+        METER_S = meter_s_value(second);
+    }
 }
 
 void set_tick_indicators(const unsigned char tick) {
+    // No need to track last value -- this value will probably
+    // ALWAYS change, so we'll always update it, regardless.
     METER_MS = meter_ms_value(tick);
 }
 
@@ -407,7 +412,7 @@ void update_tick_indicators() {
     set_tick_indicators(value);
 }
 
-void update_all() {
+void update() {
     update_hour_indicators();
     update_minute_indicators();
     update_second_indicators();
@@ -456,8 +461,6 @@ void both_buttons_pressed() {
         set_mode_show_time();
         break;
     }
-
-    update_all();
 }
 
 #define HOURS_BUTTON_PORT PINB
@@ -627,8 +630,6 @@ void set_power_mode() {
   } else {
     initialize_low_power_mode();
   }
-
-  update_all();
 }
 
 ISR(TIMER2_OVF_vect) {
@@ -758,6 +759,12 @@ void loop() {
   // be executed.
 
   debounce_buttons();
+
+  // Update the meters and servos every 8th of a second, plenty
+  // often for how fast meters and servos can actually react.
+  if( (time.get_tick() & 31) == 0 ) {
+    update();
+  }
 
   update_servos_power();
 }

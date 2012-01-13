@@ -194,6 +194,16 @@ private:
 #define SERVO_M OCR1A
 #define SERVO_H OCR1B
 
+#define SERVO_M_POWER_PORT (PORTC)
+#define SERVO_M_POWER_PORT_BIT (_BV(PORTC2))
+#define SERVO_M_POWER_DDR (DDRC)
+#define SERVO_M_POWER_DDR_BIT (_BV(DDC2))
+
+#define SERVO_H_POWER_PORT (PORTC)
+#define SERVO_H_POWER_PORT_BIT (_BV(PORTC3))
+#define SERVO_H_POWER_DDR (DDRC)
+#define SERVO_H_POWER_DDR_BIT (_BV(DDC3))
+
 #define HOUR_PULSE_PIN_PORT (PORTD)
 #define HOUR_PULSE_PIN_BIT (_BV(PORTD4))
 
@@ -256,14 +266,61 @@ unsigned short servo_m_value(unsigned char minute) {
 
 static Time time;
 
+static unsigned char servo_h_power_counter = 0;
+static const unsigned char servo_h_power_timeout = 128;
+
+void enable_servo_h_power() {
+    servo_h_power_counter = 0;
+    SERVO_H_POWER_PORT |= SERVO_H_POWER_PORT_BIT;
+}
+
+void disable_servo_h_power() {
+    SERVO_H_POWER_PORT &= ~SERVO_H_POWER_PORT_BIT;
+}
+
+void update_servo_h_power() {
+    if( servo_h_power_counter < servo_h_power_timeout ) {
+        servo_h_power_counter += 1;
+    } else {
+        disable_servo_h_power();
+    }
+}
+
+static unsigned char servo_m_power_counter = 0;
+static const unsigned char servo_m_power_timeout = 128;
+
+void enable_servo_m_power() {
+    servo_m_power_counter = 0;
+    SERVO_M_POWER_PORT |= SERVO_M_POWER_PORT_BIT;
+}
+
+void disable_servo_m_power() {
+    SERVO_M_POWER_PORT &= ~SERVO_M_POWER_PORT_BIT;
+}
+
+void update_servo_m_power() {
+    if( servo_m_power_counter < servo_m_power_timeout ) {
+        servo_m_power_counter += 1;
+    } else {
+        disable_servo_m_power();
+    }
+}
+
+void update_servos_power() {
+    update_servo_h_power();
+    update_servo_m_power();
+}
+
 void set_hour_indicators(const unsigned char hour) {
     METER_H = meter_h_value(hour);
     SERVO_H = servo_h_value(hour);
+    enable_servo_h_power();
 }
 
 void set_minute_indicators(const unsigned char minute) {
     METER_M = meter_m_value(minute);
     SERVO_M = servo_m_value(minute);
+    enable_servo_m_power();
 }
 
 void set_second_indicators(const unsigned char second) {
@@ -594,13 +651,13 @@ void initializePorts() {
 
   // PC0: I, pullup: High-power mode detect (DDC0=0, PC0=1)
   // PC1: I, pullup: DC plug present (DDC1=0, PC1=1)
-  // PC2: I:
-  // PC3: I:
+  // PC2: O: Servo M power (DDC2=1, PC2=0)
+  // PC3: O: Servo H power (DDC3=1, PC3=0)
   // PC4: I:
   // PC5: I:
   // PC6: I: RESET
   // PC7: I: (no pin)
-  DDRC = 0;
+  DDRC = _BV(DDC3) | _BV(DDC2);
   PORTC = _BV(PORTC1) | _BV(PORTC0);
 
   // PD0: I: RXD Serial RX (DDD0=0, PD0=1)
@@ -701,4 +758,6 @@ void loop() {
   // be executed.
 
   debounce_buttons();
+
+  update_servos_power();
 }

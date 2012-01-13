@@ -336,82 +336,6 @@ void set_tick_indicators(const unsigned char tick) {
     METER_MS = meter_ms_value(tick);
 }
 
-void update_hour_indicators() {
-    unsigned char value;
-    switch( meter_mode ) {
-    default:
-    case METER_MODE_SHOW_TIME:
-        value = time.get_hour();
-        break;
-        
-    case METER_MODE_CALIBRATE_ZERO_SCALE:
-        value = 0;
-        break;
-        
-    case METER_MODE_CALIBRATE_FULL_SCALE:
-        value = Time::maximumHours;
-        break;
-    }
-    set_hour_indicators(value);
-}
-
-void update_minute_indicators() {
-    unsigned char value;
-    switch( meter_mode ) {
-    default:
-    case METER_MODE_SHOW_TIME:
-        value = time.get_minute();
-        break;
-        
-    case METER_MODE_CALIBRATE_ZERO_SCALE:
-        value = 0;
-        break;
-        
-    case METER_MODE_CALIBRATE_FULL_SCALE:
-        value = Time::minutesPerHour;
-        break;
-    }
-    set_minute_indicators(value);
-}
-
-void update_second_indicators() {
-    unsigned char value;
-    switch( meter_mode ) {
-    default:
-    case METER_MODE_SHOW_TIME:
-        value = time.get_second();
-        break;
-        
-    case METER_MODE_CALIBRATE_ZERO_SCALE:
-        value = 0;
-        break;
-        
-    case METER_MODE_CALIBRATE_FULL_SCALE:
-        value = Time::secondsPerMinute;
-        break;
-    }
-    set_second_indicators(value);
-}
-
-void update_tick_indicators() {
-    unsigned char value;
-    switch( meter_mode ) {
-    default:
-    case METER_MODE_SHOW_TIME:
-        value = time.get_tick();
-        break;
-        
-    case METER_MODE_CALIBRATE_ZERO_SCALE:
-        value = 0;
-        break;
-        
-    case METER_MODE_CALIBRATE_FULL_SCALE:
-        value = Time::ticksPerSecond;
-        break;
-    }
-    set_tick_indicators(value);
-}
-
 void update_cuckoo_signals() {
     if( time.get_second() == 0 ) {
         set_start_of_minute(true);
@@ -427,10 +351,37 @@ void update_cuckoo_signals() {
 }
 
 void update() {
-    update_hour_indicators();
-    update_minute_indicators();
-    update_second_indicators();
-    update_tick_indicators(); 
+    unsigned char hour, minute, second, tick;
+    
+    switch( meter_mode ) {
+    default:
+    case METER_MODE_SHOW_TIME:
+        hour = time.get_hour();
+        minute = time.get_minute();
+        second = time.get_second();
+        tick = time.get_tick();
+        break;
+        
+    case METER_MODE_CALIBRATE_ZERO_SCALE:
+        hour = 0;
+        minute = 0;
+        second = 0;
+        tick = 0;
+        break;
+        
+    case METER_MODE_CALIBRATE_FULL_SCALE:
+        hour = Time::maximumHours;
+        minute = Time::minutesPerHour;
+        second = Time::secondsPerMinute;
+        tick = Time::ticksPerSecond;
+        break;
+        
+    }
+    
+    set_hour_indicators(hour);
+    set_minute_indicators(minute);
+    set_second_indicators(second);
+    set_tick_indicators(tick); 
     
     update_cuckoo_signals();  
 }

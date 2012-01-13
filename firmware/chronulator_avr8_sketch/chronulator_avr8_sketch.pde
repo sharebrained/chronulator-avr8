@@ -356,12 +356,13 @@ void update_hour_indicators() {
 }
 
 void update_minute_indicators() {
-    unsigned char value = time.get_minute();
-    if( value == 0 ) {
-        set_start_of_hour(true);
-    }
-    
+    unsigned char value;
     switch( meter_mode ) {
+    default:
+    case METER_MODE_SHOW_TIME:
+        value = time.get_minute();
+        break;
+        
     case METER_MODE_CALIBRATE_ZERO_SCALE:
         value = 0;
         break;
@@ -374,15 +375,13 @@ void update_minute_indicators() {
 }
 
 void update_second_indicators() {
-    unsigned char value = time.get_second();
-    if( value == 0 ) {
-        set_start_of_minute(true);
-    } else {
-        set_start_of_minute(false);
-        set_start_of_hour(false);
-    }
-    
+    unsigned char value;
     switch( meter_mode ) {
+    default:
+    case METER_MODE_SHOW_TIME:
+        value = time.get_second();
+        break;
+        
     case METER_MODE_CALIBRATE_ZERO_SCALE:
         value = 0;
         break;
@@ -397,6 +396,7 @@ void update_second_indicators() {
 void update_tick_indicators() {
     unsigned char value;
     switch( meter_mode ) {
+    default:
     case METER_MODE_SHOW_TIME:
         value = time.get_tick();
         break;
@@ -412,11 +412,27 @@ void update_tick_indicators() {
     set_tick_indicators(value);
 }
 
+void update_cuckoo_signals() {
+    if( time.get_second() == 0 ) {
+        set_start_of_minute(true);
+        if( time.get_minute() == 0 ) {
+            set_start_of_hour(true);
+        } else {
+            set_start_of_hour(false);
+        }
+    } else {
+        set_start_of_minute(false);
+        set_start_of_hour(false);
+    }
+}
+
 void update() {
     update_hour_indicators();
     update_minute_indicators();
     update_second_indicators();
-    update_tick_indicators();   
+    update_tick_indicators(); 
+    
+    update_cuckoo_signals();  
 }
 
 void set_mode_show_time() {

@@ -204,25 +204,25 @@ private:
 #define SERVO_H_POWER_DDR (DDRC)
 #define SERVO_H_POWER_DDR_BIT (_BV(DDC3))
 
-#define HOUR_PULSE_PIN_PORT (PORTD)
-#define HOUR_PULSE_PIN_BIT (_BV(PORTD4))
+#define HOUR_PULSE_PORT (PORTD)
+#define HOUR_PULSE_PORT_BIT (_BV(PORTD4))
 
-#define MINUTE_PULSE_PIN_PORT (PORTD)
-#define MINUTE_PULSE_PIN_BIT (_BV(PORTD2))
+#define MINUTE_PULSE_PORT (PORTD)
+#define MINUTE_PULSE_PORT_BIT (_BV(PORTD2))
 
 void set_start_of_hour(const bool value) {
   if( value ) {
-    HOUR_PULSE_PIN_PORT |= HOUR_PULSE_PIN_BIT;
+    HOUR_PULSE_PORT |= HOUR_PULSE_PORT_BIT;
   } else {
-    HOUR_PULSE_PIN_PORT &= ~HOUR_PULSE_PIN_BIT;
+    HOUR_PULSE_PORT &= ~HOUR_PULSE_PORT_BIT;
   }
 }
 
 void set_start_of_minute(const bool value) {
   if( value ) {
-    MINUTE_PULSE_PIN_PORT |= MINUTE_PULSE_PIN_BIT;
+    MINUTE_PULSE_PORT |= MINUTE_PULSE_PORT_BIT;
   } else {
-    MINUTE_PULSE_PIN_PORT &= ~MINUTE_PULSE_PIN_BIT;
+    MINUTE_PULSE_PORT &= ~MINUTE_PULSE_PORT_BIT;
   }
 }
 

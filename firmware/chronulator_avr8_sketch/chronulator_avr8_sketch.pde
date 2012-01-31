@@ -39,6 +39,50 @@ static const unsigned short servo_center_hours = 1500;
 static const unsigned short servo_range_minutes = 900;
 static const unsigned short servo_range_hours = 900;
 
+static const unsigned char servo_h_power_timeout = 128;
+static const unsigned char servo_m_power_timeout = 128;
+
+static const unsigned char debounce_wait = 8;
+
+#define HOURS_BUTTON_PORT PINB
+#define HOURS_BUTTON_BIT _BV(PINB0)
+
+#define MINUTES_BUTTON_PORT PIND
+#define MINUTES_BUTTON_BIT _BV(PIND7)
+
+#define METER_M OCR2A
+#define METER_H OCR2B
+
+#define METER_S OCR0A
+#define METER_S_DDR (DDRD)
+#define METER_S_DDR_BIT (_BV(DDD6))
+
+#define METER_MS OCR0B
+#define METER_MS_DDR (DDRD)
+#define METER_MS_DDR_BIT (_BV(DDD5))
+
+#define SERVO_M OCR1A
+#define SERVO_H OCR1B
+
+#define SERVO_M_POWER_PORT (PORTC)
+#define SERVO_M_POWER_PORT_BIT (_BV(PORTC2))
+#define SERVO_M_POWER_DDR (DDRC)
+#define SERVO_M_POWER_DDR_BIT (_BV(DDC2))
+
+#define SERVO_H_POWER_PORT (PORTC)
+#define SERVO_H_POWER_PORT_BIT (_BV(PORTC3))
+#define SERVO_H_POWER_DDR (DDRC)
+#define SERVO_H_POWER_DDR_BIT (_BV(DDC3))
+
+#define HOUR_PULSE_PORT (PORTD)
+#define HOUR_PULSE_PORT_BIT (_BV(PORTD4))
+
+#define MINUTE_PULSE_PORT (PORTD)
+#define MINUTE_PULSE_PORT_BIT (_BV(PORTD2))
+
+#define POWER_MODE_PIN_PORT (PINC)
+#define POWER_MODE_PIN_BIT (_BV(PINC1))
+
 typedef enum meter_mode {
   METER_MODE_SHOW_TIME = 0,
   METER_MODE_CALIBRATE_ZERO_SCALE = 1,
@@ -177,30 +221,6 @@ private:
 	}
 };
 
-#define METER_M OCR2A
-#define METER_H OCR2B
-#define METER_S OCR0A
-#define METER_MS OCR0B
-
-#define SERVO_M OCR1A
-#define SERVO_H OCR1B
-
-#define SERVO_M_POWER_PORT (PORTC)
-#define SERVO_M_POWER_PORT_BIT (_BV(PORTC2))
-#define SERVO_M_POWER_DDR (DDRC)
-#define SERVO_M_POWER_DDR_BIT (_BV(DDC2))
-
-#define SERVO_H_POWER_PORT (PORTC)
-#define SERVO_H_POWER_PORT_BIT (_BV(PORTC3))
-#define SERVO_H_POWER_DDR (DDRC)
-#define SERVO_H_POWER_DDR_BIT (_BV(DDC3))
-
-#define HOUR_PULSE_PORT (PORTD)
-#define HOUR_PULSE_PORT_BIT (_BV(PORTD4))
-
-#define MINUTE_PULSE_PORT (PORTD)
-#define MINUTE_PULSE_PORT_BIT (_BV(PORTD2))
-
 void set_start_of_hour(const bool value) {
   if( value ) {
     HOUR_PULSE_PORT |= HOUR_PULSE_PORT_BIT;
@@ -258,7 +278,6 @@ unsigned short servo_m_value(unsigned char minute) {
 static Time time;
 
 static unsigned char servo_h_power_counter = 0;
-static const unsigned char servo_h_power_timeout = 128;
 
 void enable_servo_h_power() {
     servo_h_power_counter = 0;
@@ -278,7 +297,6 @@ void update_servo_h_power() {
 }
 
 static unsigned char servo_m_power_counter = 0;
-static const unsigned char servo_m_power_timeout = 128;
 
 void enable_servo_m_power() {
     servo_m_power_counter = 0;
@@ -430,12 +448,6 @@ void both_buttons_pressed() {
     }
 }
 
-#define HOURS_BUTTON_PORT PINB
-#define HOURS_BUTTON_BIT _BV(PINB0)
-
-#define MINUTES_BUTTON_PORT PIND
-#define MINUTES_BUTTON_BIT _BV(PIND7)
-
 bool is_hours_button_pressed() {
     return (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) ? false : true;
 }
@@ -451,7 +463,6 @@ typedef enum button_mode {
     BUTTON_MODE_BOTH = 3,
 } button_mode_t;
 
-static const unsigned char debounce_wait = 8;
 static unsigned char debounce_counter = 0;
 
 static button_mode_t button_mode = BUTTON_MODE_NONE;
@@ -587,9 +598,6 @@ void initialize_low_power_mode() {
   // uninteresting peripherals.
   set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 }
-
-#define POWER_MODE_PIN_PORT (PINC)
-#define POWER_MODE_PIN_BIT (_BV(PINC1))
 
 void set_power_mode() {
   if( (POWER_MODE_PIN_PORT & POWER_MODE_PIN_BIT) == 0 ) {

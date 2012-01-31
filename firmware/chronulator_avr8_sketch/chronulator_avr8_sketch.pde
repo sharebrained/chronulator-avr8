@@ -31,6 +31,8 @@
 #define VERSION_RELEASE "200812090122"
 #define F_CPU 4000000
 
+static const unsigned short update_tick_interval = (1 << 5);
+
 static const unsigned short servo_cycle_time = 20000;
 
 static const unsigned short servo_center_minutes = 1500;
@@ -39,8 +41,8 @@ static const unsigned short servo_center_hours = 1500;
 static const unsigned short servo_range_minutes = 900;
 static const unsigned short servo_range_hours = 900;
 
-static const unsigned char servo_h_power_timeout = 128;
-static const unsigned char servo_m_power_timeout = 128;
+static const unsigned char servo_h_power_timeout = 128 / update_tick_interval;
+static const unsigned char servo_m_power_timeout = 128 / update_tick_interval;
 
 static const unsigned char debounce_wait = 8;
 
@@ -434,7 +436,8 @@ void update() {
     set_second_indicators(second);
     set_tick_indicators(tick); 
     
-    update_cuckoo_signals();  
+    update_cuckoo_signals();
+    update_servos_power();
 }
 
 void set_mode_show_time() {
@@ -799,9 +802,7 @@ void loop() {
 
   // Update the meters and servos every 8th of a second, plenty
   // often for how fast meters and servos can actually react.
-  if( (time.get_tick() & 31) == 0 ) {
+  if( (time.get_tick() & (update_tick_interval - 1)) == 0 ) {
     update();
   }
-
-  update_servos_power();
 }

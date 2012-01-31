@@ -626,7 +626,7 @@ void initializePorts() {
   DDRB = _BV(DDB2) | _BV(DDB1);
   PORTB = _BV(PORTB0);
 
-  // PC0: I, pullup: High-power mode detect (DDC0=0, PC0=1)
+  // PC0: I:
   // PC1: I, pullup: DC plug present (DDC1=0, PC1=1)
   // PC2: O: Servo M power (DDC2=1, PC2=0)
   // PC3: O: Servo H power (DDC3=1, PC3=0)
@@ -635,7 +635,7 @@ void initializePorts() {
   // PC6: I: RESET
   // PC7: I: (no pin)
   DDRC = _BV(DDC3) | _BV(DDC2);
-  PORTC = _BV(PORTC1) | _BV(PORTC0);
+  PORTC = _BV(PORTC1);
 
   // PD0: I: RXD Serial RX (DDD0=0, PD0=1)
   // PD1: O: TXD Serial TX (DDD1=1, PD1=1)

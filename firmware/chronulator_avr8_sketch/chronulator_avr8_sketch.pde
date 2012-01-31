@@ -546,7 +546,8 @@ void enable_s_and_ms_meters() {
   enable_timer0();
 
   // TODO: PORTD settings?
-  DDRD |= _BV(DDD6) | _BV(DDD5);
+  METER_S_DDR  |= METER_S_DDR_BIT
+  METER_MS_DDR |= METER_MS_DDR_BIT;
 }
 
 void enable_servos() {
@@ -556,8 +557,8 @@ void enable_servos() {
   TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
   ICR1 = servo_cycle_time;
   TCNT1 = 0;
-  OCR1A = 0;
-  OCR1B = 0;
+  SERVO_M = 0;
+  SERVO_H = 0;
 }
 
 typedef enum _PowerMode {

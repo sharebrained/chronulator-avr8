@@ -44,14 +44,27 @@ static const unsigned char servo_m_power_timeout = 128;
 
 static const unsigned char debounce_wait = 8;
 
-#define HOURS_BUTTON_PORT PINB
-#define HOURS_BUTTON_BIT _BV(PINB0)
+#define HOURS_BUTTON_PIN (PINB)
+#define HOURS_BUTTON_PIN_BIT (_BV(PINB0))
+#define HOURS_BUTTON_PORT (PORTB)
+#define HOURS_BUTTON_PORT_BIT (_BV(PORTB0))
+#define HOURS_BUTTON_DDR (DDRB)
+#define HOURS_BUTTON_DDR_BIT (_BV(DDB0))
 
-#define MINUTES_BUTTON_PORT PIND
-#define MINUTES_BUTTON_BIT _BV(PIND7)
+#define MINUTES_BUTTON_PIN (PIND)
+#define MINUTES_BUTTON_PIN_BIT (_BV(PIND7))
+#define MINUTES_BUTTON_PORT (PORTD)
+#define MINUTES_BUTTON_PORT_BIT (_BV(PORTD7))
+#define MINUTES_BUTTON_DDR (DDRD)
+#define MINUTES_BUTTON_DDR_BIT (_BV(DDD7))
 
 #define METER_M OCR2A
+#define METER_M_DDR (DDRB)
+#define METER_M_DDR_BIT (_BV(DDB3))
+
 #define METER_H OCR2B
+#define METER_H_DDR (DDRD)
+#define METER_H_DDR_BIT (_BV(DDD3))
 
 #define METER_S OCR0A
 #define METER_S_DDR (DDRD)
@@ -62,7 +75,12 @@ static const unsigned char debounce_wait = 8;
 #define METER_MS_DDR_BIT (_BV(DDD5))
 
 #define SERVO_M OCR1A
+#define SERVO_M_DDR (DDRB)
+#define SERVO_M_DDR_BIT (_BV(DDB1))
+
 #define SERVO_H OCR1B
+#define SERVO_H_DDR (DDRB)
+#define SERVO_H_DDR_BIT (_BV(DDB2))
 
 #define SERVO_M_POWER_PORT (PORTC)
 #define SERVO_M_POWER_PORT_BIT (_BV(PORTC2))
@@ -76,12 +94,20 @@ static const unsigned char debounce_wait = 8;
 
 #define HOUR_PULSE_PORT (PORTD)
 #define HOUR_PULSE_PORT_BIT (_BV(PORTD4))
+#define HOUR_PULSE_DDR (DDRD)
+#define HOUR_PULSE_DDR_BIT (_BV(DDD4))
 
 #define MINUTE_PULSE_PORT (PORTD)
 #define MINUTE_PULSE_PORT_BIT (_BV(PORTD2))
+#define MINUTE_PULSE_DDR (DDRD)
+#define MINUTE_PULSE_DDR_BIT (_BV(DDD2))
 
-#define POWER_MODE_PIN_PORT (PINC)
+#define POWER_MODE_PIN (PINC)
 #define POWER_MODE_PIN_BIT (_BV(PINC1))
+#define POWER_MODE_PORT (PORTC)
+#define POWER_MODE_PORT_BIT (_BV(PORTC1))
+#define POWER_MODE_DDR (DDRC)
+#define POWER_MODE_DDR_BIT (_BV(DDC1))
 
 typedef enum meter_mode {
   METER_MODE_SHOW_TIME = 0,
@@ -235,6 +261,13 @@ void set_start_of_minute(const bool value) {
   } else {
     MINUTE_PULSE_PORT &= ~MINUTE_PULSE_PORT_BIT;
   }
+}
+
+void enable_pulse_outputs() {
+    set_start_of_hour(false);
+    set_start_of_minute(false);
+    HOUR_PULSE_DDR   |= HOUR_PULSE_DDR_BIT;
+    MINUTE_PULSE_DDR |= MINUTE_PULSE_DDR_BIT;
 }
 
 static const unsigned short servo_offset_minutes = servo_center_minutes - (servo_range_minutes / 2);
@@ -449,11 +482,11 @@ void both_buttons_pressed() {
 }
 
 bool is_hours_button_pressed() {
-    return (HOURS_BUTTON_PORT & HOURS_BUTTON_BIT) ? false : true;
+    return (HOURS_BUTTON_PIN & HOURS_BUTTON_PIN_BIT) ? false : true;
 }
 
 bool is_minutes_button_pressed() {
-    return (MINUTES_BUTTON_PORT & MINUTES_BUTTON_BIT) ? false : true;
+    return (MINUTES_BUTTON_PIN & MINUTES_BUTTON_PIN_BIT) ? false : true;
 }
 
 typedef enum button_mode {
@@ -533,8 +566,8 @@ void enable_timer0() {
   TIMSK0 = 0;
   
   TCNT0 = 0;  
-  OCR0A = 0;
-  OCR0B = 0;
+  METER_S = 0;
+  METER_MS = 0;
   
   TCCR0A = _BV(COM0A1) | _BV(COM0B1) /*| _BV(WGM01)*/ | _BV(WGM00);
   TCCR0B = _BV(CS01) | _BV(CS00);
@@ -546,7 +579,7 @@ void enable_s_and_ms_meters() {
   enable_timer0();
 
   // TODO: PORTD settings?
-  METER_S_DDR  |= METER_S_DDR_BIT
+  METER_S_DDR  |= METER_S_DDR_BIT;
   METER_MS_DDR |= METER_MS_DDR_BIT;
 }
 
@@ -559,6 +592,12 @@ void enable_servos() {
   TCNT1 = 0;
   SERVO_M = 0;
   SERVO_H = 0;
+
+    SERVO_M_DDR |= SERVO_M_DDR_BIT;
+    SERVO_M_POWER_DDR |= SERVO_M_POWER_DDR_BIT;
+    
+    SERVO_H_DDR |= SERVO_H_DDR_BIT;
+    SERVO_H_POWER_DDR |= SERVO_H_POWER_DDR_BIT;
 }
 
 typedef enum _PowerMode {
@@ -601,7 +640,7 @@ void initialize_low_power_mode() {
 }
 
 void set_power_mode() {
-  if( (POWER_MODE_PIN_PORT & POWER_MODE_PIN_BIT) == 0 ) {
+  if( (POWER_MODE_PIN & POWER_MODE_PIN_BIT) == 0 ) {
     initialize_high_power_mode();
   } else {
     initialize_low_power_mode();
@@ -610,6 +649,24 @@ void set_power_mode() {
 
 ISR(TIMER2_OVF_vect) {
   time.tick();
+}
+
+void enable_power_mode_input() {
+    // Make pin input.
+    POWER_MODE_DDR &= ~POWER_MODE_DDR_BIT;
+    
+    // Enable pull-up on pin.
+    POWER_MODE_PORT |= POWER_MODE_PORT_BIT;
+}
+
+void enable_switch_inputs() {
+    // Make pins inputs.
+    HOURS_BUTTON_DDR   &= ~HOURS_BUTTON_DDR_BIT;
+    MINUTES_BUTTON_DDR &= ~MINUTES_BUTTON_DDR_BIT;
+    
+    // Enable pull-ups on pins.
+    HOURS_BUTTON_PORT   |= HOURS_BUTTON_PORT_BIT;
+    MINUTES_BUTTON_PORT |= MINUTES_BUTTON_PORT_BIT;
 }
 
 void initializePorts() {
@@ -623,8 +680,8 @@ void initializePorts() {
   // PB5: I:
   // PB6: I: TOSC1 (crystal) (DDB6=0, PB6=0)
   // PB7: I: TOSC2 (crystal) (DDB7=0, PB7=0)
-  DDRB = _BV(DDB2) | _BV(DDB1);
-  PORTB = _BV(PORTB0);
+  DDRB = 0;
+  PORTB = 0;
 
   // PC0: I:
   // PC1: I, pullup: DC plug present (DDC1=0, PC1=1)
@@ -634,8 +691,8 @@ void initializePorts() {
   // PC5: I:
   // PC6: I: RESET
   // PC7: I: (no pin)
-  DDRC = _BV(DDC3) | _BV(DDC2);
-  PORTC = _BV(PORTC1);
+  DDRC = 0;
+  PORTC = 0;
 
   // PD0: I: RXD Serial RX (DDD0=0, PD0=1)
   // PD1: O: TXD Serial TX (DDD1=1, PD1=1)
@@ -645,11 +702,15 @@ void initializePorts() {
   // PD5: O: OC0B PWM output, LED (DDD5=1, PD5=0)
   // PD6: O: OC0A PWM output, LED (DDD6=1, PD6=0)
   // PD7: I, pullup: Switch (DDD7=0, PD7=1)
-  DDRD = _BV(DDD2) | _BV(DDD4);
-  PORTD = _BV(PORTD7);
+  DDRD = 0;
+  PORTD = 0;
 
   // Do not disable internal pull-up resistors on ports.
   MCUCR &= ~_BV(PUD);
+
+    enable_power_mode_input();
+    enable_switch_inputs();
+    enable_pulse_outputs();
 }
 
 void initializeAnalogToMinimizePower() {
@@ -676,8 +737,8 @@ void initializeTimer2For32KHzCrystal() {
   
   // c. Write new values to TCNT2, OCR2x, and TCCR2x.
   TCNT2 = 0;
-  OCR2A = 0;
-  OCR2B = 0;
+    METER_M = 0;
+    METER_H = 0;
 
   TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
   TCCR2B = _BV(CS20);
@@ -691,8 +752,8 @@ void initializeTimer2For32KHzCrystal() {
   // f. Enable interrupts, if needed.
   TIMSK2 = _BV(TOIE2);
 
-  DDRB |= _BV(DDB3);
-  DDRD |= _BV(DDD3);
+    METER_M_DDR |= METER_M_DDR_BIT;
+    METER_H_DDR |= METER_H_DDR_BIT;
 }
 
 void setup() {

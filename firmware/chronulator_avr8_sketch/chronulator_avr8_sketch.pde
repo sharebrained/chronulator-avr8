@@ -651,6 +651,11 @@ void set_power_mode() {
 }
 
 ISR(TIMER2_OVF_vect) {
+  // Ensure TOSC cycle will not cause extra interrupts.
+  // a. Write a value to TCCR2x, TCNT2, or OCR2x. 
+  // Steps b, c happen immediately before sleep.
+  TCCR2B = _BV(CS20);
+
   time.tick();
 }
 
@@ -744,13 +749,13 @@ void initializeTimer2For32KHzCrystal() {
     METER_H = 0;
 
   TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
-  TCCR2B = _BV(CS20);
+  TCCR2B = 0;
   
   // d. To switch to asynchronous operation: Wait for TCN2xUB, OCR2xUB, and TCR2xUB.
   while( ASSR & (_BV(TCN2UB) | _BV(OCR2AUB) | _BV(OCR2BUB) | _BV(TCR2AUB) | _BV(TCR2BUB)) );
   
   // e. Clear the Timer/Counter2 Interrupt Flags.
-  TIFR2 = 0;
+  TIFR2 = _BV(OCF2B) | _BV(OCF2A) | _BV(TOV2);
   
   // f. Enable interrupts, if needed.
   TIMSK2 = _BV(TOIE2);
@@ -775,21 +780,17 @@ void setup() {
   set_power_mode();
   
   sei();
+
+  // Start timer 2.
+  TCCR2B = _BV(CS20);
 }
 
 void loop() {
-  // Ensure TOSC cycle will not cause extra interrupts.
-  // a. Write a value to TCCR2x, TCNT2, or OCR2x. 
-  // b. Wait until the corresponding Update Busy Flag in ASSR returns to zero. 
-  // c. Enter Power-save or ADC Noise Reduction mode.
-
   // Can't re-enter power save mode until the TOSC1 cycle that woke us is
   // complete. Use the writes to OCR2A/B, performed earlier in this interrupt
   // routine, to indicate when the cycle is over. The ASSR OCR2xUB flags will
   // clear when the cycle is over.
-  if( sleepModeCausesSpuriousTimer2Interrupts() ) {
-    waitForTimer2CycleToEnd();
-  }
+  waitForTimer2CycleToEnd();
 
   sleep_mode();
 

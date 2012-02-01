@@ -60,27 +60,27 @@ static const unsigned char debounce_wait = 8;
 #define MINUTES_BUTTON_DDR (DDRD)
 #define MINUTES_BUTTON_DDR_BIT (_BV(DDD7))
 
-#define METER_M_OCR OCR2A
+#define METER_M_OCR (OCR2A)
 #define METER_M_DDR (DDRB)
 #define METER_M_DDR_BIT (_BV(DDB3))
 
-#define METER_H_OCR OCR2B
+#define METER_H_OCR (OCR2B)
 #define METER_H_DDR (DDRD)
 #define METER_H_DDR_BIT (_BV(DDD3))
 
-#define METER_S_OCR OCR0A
+#define METER_S_OCR (OCR0A)
 #define METER_S_DDR (DDRD)
 #define METER_S_DDR_BIT (_BV(DDD6))
 
-#define METER_MS_OCR OCR0B
+#define METER_MS_OCR (OCR0B)
 #define METER_MS_DDR (DDRD)
 #define METER_MS_DDR_BIT (_BV(DDD5))
 
-#define SERVO_M_OCR OCR1A
+#define SERVO_M_OCR (OCR1A)
 #define SERVO_M_DDR (DDRB)
 #define SERVO_M_DDR_BIT (_BV(DDB1))
 
-#define SERVO_H_OCR OCR1B
+#define SERVO_H_OCR (OCR1B)
 #define SERVO_H_DDR (DDRB)
 #define SERVO_H_DDR_BIT (_BV(DDB2))
 

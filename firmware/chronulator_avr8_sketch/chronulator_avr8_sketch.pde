@@ -761,7 +761,6 @@ void initializeTimer2For32KHzCrystal() {
 
 void setup() {
   clock_prescale_set(clock_div_2);
-  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 
   cli();
 

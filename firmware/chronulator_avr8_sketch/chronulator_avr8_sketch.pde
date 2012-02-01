@@ -792,9 +792,10 @@ void setup() {
 
 void loop() {
   // Can't re-enter power save mode until the TOSC1 cycle that woke us is
-  // complete. Use the writes to OCR2A/B, performed earlier in this interrupt
-  // routine, to indicate when the cycle is over. The ASSR OCR2xUB flags will
-  // clear when the cycle is over.
+  // complete. Write to certain timer 2 registers (TCNT2, TCCR2x, or OCR2x)
+  // to start an operation that completes with TOSC1 in the right state.
+  // Completion is indicated by the appropriate busy flag in the ASSR
+  // register.
   waitForTimer2CycleToEnd();
 
   sleep_mode();

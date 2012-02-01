@@ -28,7 +28,7 @@
 #include <avr/power.h>
 #include <util/delay.h>
 
-#define VERSION_RELEASE "200812090122"
+#define VERSION_RELEASE "201201312149-alpha"
 #define F_CPU 4000000
 
 static const unsigned short update_tick_interval = (1 << 4);

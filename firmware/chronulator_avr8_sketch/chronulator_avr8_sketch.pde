@@ -573,7 +573,7 @@ void enable_timer0() {
   METER_MS = 0;
   
   TCCR0A = _BV(COM0A1) | _BV(COM0B1) /*| _BV(WGM01)*/ | _BV(WGM00);
-  TCCR0B = _BV(CS01) | _BV(CS00);
+  TCCR0B = 0;
   
   TIFR0 = _BV(OCF0B) | _BV(OCF0A) | _BV(TOV0);
 }
@@ -597,7 +597,7 @@ void enable_servos() {
   SERVO_H = 0;
 
   TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
-  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
+  TCCR1B = _BV(WGM13) | _BV(WGM12);
 
   TIFR1 = _BV(ICF1) | _BV(OCF1B) | _BV(OCF1A) | _BV(TOV1);
 
@@ -786,8 +786,10 @@ void setup() {
   
   sei();
 
-  // Start timer 2.
-  TCCR2B = _BV(CS20);
+  // Start timers.
+  TCCR0B |= _BV(CS01) | _BV(CS00);    // timer 0 operates at clkio/64
+  TCCR1B |= _BV(CS11);                // timer 1 operates at clkio/8
+  TCCR2B |= _BV(CS20);                // timer 2 operates at clkt2s/1
 }
 
 void loop() {

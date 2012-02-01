@@ -560,7 +560,7 @@ bool sleepModeCausesSpuriousTimer2Interrupts() {
 }
 
 void waitForTimer2CycleToEnd() {
-  while(ASSR & (_BV(OCR2AUB) | _BV(OCR2BUB)));
+  while( ASSR & (_BV(TCN2UB) | _BV(OCR2AUB) | _BV(OCR2BUB) | _BV(TCR2AUB) | _BV(TCR2BUB)) );
 }
 
 void enable_timer0() {

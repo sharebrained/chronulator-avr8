@@ -31,7 +31,7 @@
 #define VERSION_RELEASE "200812090122"
 #define F_CPU 4000000
 
-static const unsigned short update_tick_interval = (1 << 5);
+static const unsigned short update_tick_interval = (1 << 4);
 
 static const unsigned short servo_cycle_time = 20000;
 

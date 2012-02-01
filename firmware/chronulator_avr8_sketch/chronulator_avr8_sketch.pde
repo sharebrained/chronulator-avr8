@@ -575,7 +575,7 @@ void enable_timer0() {
   TCCR0A = _BV(COM0A1) | _BV(COM0B1) /*| _BV(WGM01)*/ | _BV(WGM00);
   TCCR0B = _BV(CS01) | _BV(CS00);
   
-  TIFR0 = 0;
+  TIFR0 = _BV(OCF0B) | _BV(OCF0A) | _BV(TOV0);
 }
 
 void enable_s_and_ms_meters() {
@@ -589,12 +589,16 @@ void enable_s_and_ms_meters() {
 void enable_servos() {
   power_timer1_enable();
   
+  TIMSK1 = 0;
+
   TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
   TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
   ICR1 = servo_cycle_time;
   TCNT1 = 0;
   SERVO_M = 0;
   SERVO_H = 0;
+
+  TIFR1 = _BV(ICF1) | _BV(OCF1B) | _BV(OCF1A) | _BV(TOV1);
 
     SERVO_M_DDR |= SERVO_M_DDR_BIT;
     SERVO_M_POWER_DDR |= SERVO_M_POWER_DDR_BIT;

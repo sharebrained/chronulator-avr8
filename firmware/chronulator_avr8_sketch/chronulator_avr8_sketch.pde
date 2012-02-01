@@ -60,27 +60,27 @@ static const unsigned char debounce_wait = 8;
 #define MINUTES_BUTTON_DDR (DDRD)
 #define MINUTES_BUTTON_DDR_BIT (_BV(DDD7))
 
-#define METER_M OCR2A
+#define METER_M_OCR OCR2A
 #define METER_M_DDR (DDRB)
 #define METER_M_DDR_BIT (_BV(DDB3))
 
-#define METER_H OCR2B
+#define METER_H_OCR OCR2B
 #define METER_H_DDR (DDRD)
 #define METER_H_DDR_BIT (_BV(DDD3))
 
-#define METER_S OCR0A
+#define METER_S_OCR OCR0A
 #define METER_S_DDR (DDRD)
 #define METER_S_DDR_BIT (_BV(DDD6))
 
-#define METER_MS OCR0B
+#define METER_MS_OCR OCR0B
 #define METER_MS_DDR (DDRD)
 #define METER_MS_DDR_BIT (_BV(DDD5))
 
-#define SERVO_M OCR1A
+#define SERVO_M_OCR OCR1A
 #define SERVO_M_DDR (DDRB)
 #define SERVO_M_DDR_BIT (_BV(DDB1))
 
-#define SERVO_H OCR1B
+#define SERVO_H_OCR OCR1B
 #define SERVO_H_DDR (DDRB)
 #define SERVO_H_DDR_BIT (_BV(DDB2))
 
@@ -359,8 +359,8 @@ void set_hour_indicators(const unsigned char hour) {
     static unsigned char last_value = 255;
     if( hour != last_value ) {
         last_value = hour;
-        METER_H = meter_h_value(hour);
-        SERVO_H = servo_h_value(hour);
+        METER_H_OCR = meter_h_value(hour);
+        SERVO_H_OCR = servo_h_value(hour);
         enable_servo_h_power();
     }
 }
@@ -369,8 +369,8 @@ void set_minute_indicators(const unsigned char minute) {
     static unsigned char last_value = 255;
     if( minute != last_value ) {
         last_value = minute;
-        METER_M = meter_m_value(minute);
-        SERVO_M = servo_m_value(minute);
+        METER_M_OCR = meter_m_value(minute);
+        SERVO_M_OCR = servo_m_value(minute);
         enable_servo_m_power();
     }
 }
@@ -379,14 +379,14 @@ void set_second_indicators(const unsigned char second) {
     static unsigned char last_value = 255;
     if( second != last_value ) {
         last_value = second;
-        METER_S = meter_s_value(second);
+        METER_S_OCR = meter_s_value(second);
     }
 }
 
 void set_tick_indicators(const unsigned char tick) {
     // No need to track last value -- this value will probably
     // ALWAYS change, so we'll always update it, regardless.
-    METER_MS = meter_ms_value(tick);
+    METER_MS_OCR = meter_ms_value(tick);
 }
 
 void update_cuckoo_signals() {
@@ -569,8 +569,8 @@ void enable_timer0() {
   TIMSK0 = 0;
   
   TCNT0 = 0;  
-  METER_S = 0;
-  METER_MS = 0;
+  METER_S_OCR = 0;
+  METER_MS_OCR = 0;
   
   TCCR0A = _BV(COM0A1) | _BV(COM0B1) /*| _BV(WGM01)*/ | _BV(WGM00);
   TCCR0B = 0;
@@ -593,8 +593,8 @@ void enable_servos() {
 
   ICR1 = servo_cycle_time;
   TCNT1 = 0;
-  SERVO_M = 0;
-  SERVO_H = 0;
+  SERVO_M_OCR = 0;
+  SERVO_H_OCR = 0;
 
   TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
   TCCR1B = _BV(WGM13) | _BV(WGM12);
@@ -750,8 +750,8 @@ void initializeTimer2For32KHzCrystal() {
   
   // c. Write new values to TCNT2, OCR2x, and TCCR2x.
   TCNT2 = 0;
-    METER_M = 0;
-    METER_H = 0;
+    METER_M_OCR = 0;
+    METER_H_OCR = 0;
 
   TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
   TCCR2B = 0;

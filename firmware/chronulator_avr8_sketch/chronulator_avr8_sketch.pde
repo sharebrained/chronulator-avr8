@@ -591,12 +591,13 @@ void enable_servos() {
   
   TIMSK1 = 0;
 
-  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
-  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
   ICR1 = servo_cycle_time;
   TCNT1 = 0;
   SERVO_M = 0;
   SERVO_H = 0;
+
+  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
+  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11);     // set prescaler of 8
 
   TIFR1 = _BV(ICF1) | _BV(OCF1B) | _BV(OCF1A) | _BV(TOV1);
 

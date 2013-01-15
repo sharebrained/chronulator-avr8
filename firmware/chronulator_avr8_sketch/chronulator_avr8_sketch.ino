@@ -1,7 +1,7 @@
 /*
  **********************************************************
  *
- * Copyright 2008-2010 ShareBrained Technology, Inc.
+ * Copyright 2008-2013 ShareBrained Technology, Inc.
  *
  * This file is part of chronulator-avr8.
  *
@@ -28,7 +28,9 @@
 #include <avr/power.h>
 #include <util/delay.h>
 
-#define VERSION_RELEASE "201201312149-alpha"
+#include "chronulator_types.h"
+
+#define VERSION_RELEASE "201301151246-alpha"
 #define F_CPU 4000000
 
 static const unsigned short update_tick_interval = (1 << 4);
@@ -110,12 +112,6 @@ static const unsigned char debounce_wait = 8;
 #define POWER_MODE_PORT_BIT (_BV(PORTC1))
 #define POWER_MODE_DDR (DDRC)
 #define POWER_MODE_DDR_BIT (_BV(DDC1))
-
-typedef enum meter_mode {
-    METER_MODE_SHOW_TIME = 0,
-    METER_MODE_CALIBRATE_ZERO_SCALE = 1,
-    METER_MODE_CALIBRATE_FULL_SCALE = 2,
-} meter_mode_t;
 
 static meter_mode_t meter_mode = METER_MODE_SHOW_TIME;
 
@@ -492,13 +488,6 @@ bool is_minutes_button_pressed() {
     return (MINUTES_BUTTON_PIN & MINUTES_BUTTON_PIN_BIT) ? false : true;
 }
 
-typedef enum button_mode {
-    BUTTON_MODE_NONE = 0,
-    BUTTON_MODE_HOURS = 1,
-    BUTTON_MODE_MINUTES = 2,
-    BUTTON_MODE_BOTH = 3,
-} button_mode_t;
-
 static unsigned char debounce_counter = 0;
 
 static button_mode_t button_mode = BUTTON_MODE_NONE;
@@ -609,11 +598,6 @@ void enable_servos() {
     SERVO_H_DDR |= SERVO_H_DDR_BIT;
     SERVO_H_POWER_DDR |= SERVO_H_POWER_DDR_BIT;
 }
-
-typedef enum _PowerMode {
-    POWER_MODE_LOW_POWER,
-    POWER_MODE_HIGH_POWER,
-} PowerMode;
 
 static PowerMode power_mode = POWER_MODE_LOW_POWER;
 
